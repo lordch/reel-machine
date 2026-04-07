@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "${PORT:-3001}:${PORT:-3001}"
+    env_file: .env
+    volumes:
+      - ./google-sa-key.json:/app/google-sa-key.json:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3001}/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

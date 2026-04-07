@@ -12,6 +12,7 @@
     "pipeline:music": "npx tsx src/pipeline/generate-music.ts",
     "pipeline:assemble": "npx tsx src/pipeline/assemble.ts",
     "orchestrate": "npx tsx src/orchestrate.ts",
+    "api": "npx tsx src/api/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -23,7 +24,10 @@
     "@remotion/google-fonts": "^4.0.438",
     "@remotion/renderer": "^4.0.438",
     "@remotion/transitions": "^4.0.438",
+    "@types/express": "^5.0.6",
     "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "googleapis": "^171.4.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "remotion": "^4.0.438",
