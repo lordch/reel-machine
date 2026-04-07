@@ -17,7 +17,7 @@ import { generateMusic } from "./pipeline/generate-music.js";
 import { assemble } from "./pipeline/assemble.js";
 import { printCostSummary } from "./pipeline/costs.js";
 
-async function orchestrate(scenarioId: string, productId?: string, shouldRender = true): Promise<string> {
+export async function orchestrate(scenarioId: string, productId?: string, shouldRender = true): Promise<string> {
   const startTime = Date.now();
   console.log(`\n${"═".repeat(60)}`);
   console.log(`  Reel Machine — Orchestrating: ${scenarioId}`);
@@ -60,22 +60,25 @@ async function orchestrate(scenarioId: string, productId?: string, shouldRender 
   return outputPath;
 }
 
-// ── CLI ──
-const scenarioId = process.argv[2];
-const productFlag = process.argv.find(a => a.startsWith("--product="));
-const productId = productFlag?.split("=")[1];
-const noRender = process.argv.includes("--no-render");
+// ── CLI (only when run directly) ──
+const isCLI = process.argv[1]?.includes("orchestrate");
+if (isCLI) {
+  const scenarioId = process.argv[2];
+  const productFlag = process.argv.find(a => a.startsWith("--product="));
+  const productId = productFlag?.split("=")[1];
+  const noRender = process.argv.includes("--no-render");
 
-if (!scenarioId) {
-  console.error("Usage: npx tsx src/orchestrate.ts <scenario-id> [--product=<id>] [--no-render]");
-  process.exit(1);
-}
-
-orchestrate(scenarioId, productId, !noRender)
-  .then((outputPath) => {
-    console.log(`Output: ${outputPath}`);
-  })
-  .catch((err) => {
-    console.error(`\nPipeline FAILED: ${err.message}`);
+  if (!scenarioId) {
+    console.error("Usage: npx tsx src/orchestrate.ts <scenario-id> [--product=<id>] [--no-render]");
     process.exit(1);
-  });
+  }
+
+  orchestrate(scenarioId, productId, !noRender)
+    .then((outputPath) => {
+      console.log(`Output: ${outputPath}`);
+    })
+    .catch((err) => {
+      console.error(`\nPipeline FAILED: ${err.message}`);
+      process.exit(1);
+    });
+}
