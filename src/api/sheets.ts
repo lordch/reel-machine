@@ -23,17 +23,25 @@ function spreadsheetId(): string {
 // ── Config tab ──
 
 export interface SheetConfig {
+  // Product
   product_name: string;
   website: string;
   product_description: string;
+  product_features: string;
   target_audience: string;
+  pain_points: string;
+  key_messages: string;
+  competitors_diff: string;
   brand_voice: string;
   language: string;
+  // Video settings
   avatar: string;
   caption_style: string;
   broll_model: string;
+  // Generation
   batch_size: number;
   batch_prompt: string;
+  // Notifications
   alert_email: string;
   alert_slack_webhook: string;
 }
@@ -42,14 +50,16 @@ export async function readConfig(): Promise<SheetConfig> {
   const sheets = getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: spreadsheetId(),
-    range: "Config!A1:M2",
+    range: "Config!A:B",
   });
 
-  const [headers, values] = res.data.values || [[], []];
+  const rows = res.data.values || [];
   const config: Record<string, string> = {};
-  headers.forEach((h: string, i: number) => {
-    config[h] = values[i] || "";
-  });
+  for (const [key, value] of rows) {
+    // Skip section headers (## PRODUCT, etc.)
+    if (!key || key.startsWith("##")) continue;
+    config[key] = value || "";
+  }
 
   return {
     ...config,

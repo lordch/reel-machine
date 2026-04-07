@@ -1,8 +1,94 @@
 import "dotenv/config";
 import { google } from "googleapis";
 
-const SPREADSHEET_ID = "17N4MpqYfd8rbJAfyDohiehATYFDug00ZlZ6ch3yR9XI";
-const KEY_FILE = "./reel-machine-492612-b8601a4a2d33.json";
+const SPREADSHEET_ID = process.env.GOOGLE_SHEETS_ID || "17N4MpqYfd8rbJAfyDohiehATYFDug00ZlZ6ch3yR9XI";
+const KEY_FILE = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || "./reel-machine-492612-b8601a4a2d33.json";
+
+// ── Config: vertical key-value pairs (A = key, B = value) ──
+
+const CONFIG_ROWS: [string, string][] = [
+  // ── PRODUCT ──
+  ["## PRODUCT", ""],
+  ["product_name", "Go2EV"],
+  ["website", "go2ev.com"],
+  ["product_description", `Go2EV is an AI-powered monitoring and management platform for EV charging infrastructure. It connects to any charger brand and gives operators a single dashboard to monitor uptime, session success rates, energy usage, and revenue — in real time.
+
+It's built for businesses that installed EV chargers but don't have the tools or staff to keep them running reliably. Hotels, parking operators, retail chains, property managers, CPOs with mixed-vendor fleets.
+
+Go2EV doesn't manufacture chargers. It sits on top of existing hardware and makes it visible, predictable, and manageable.`],
+
+  ["product_features", `• Real-time monitoring — live status of every charger, session success/failure, energy flow
+• Multi-vendor support — works with any charger brand (ABB, Easee, Wallbox, Zaptec, etc.), one dashboard for all
+• Predictive alerts — AI detects patterns before failures happen, alerts you before the charger goes offline
+• Remote diagnostics — see error codes, restart chargers, update firmware from your phone
+• Session analytics — revenue per station, usage patterns by time of day, occupancy rates
+• Automated reporting — weekly/monthly reports for management, compliance, or investors
+• Multi-site management — manage 5 or 500 locations from one account
+• Open API — integrates with existing property management, billing, or energy systems`],
+
+  ["target_audience", `• CPO operators (Charge Point Operators) managing 50+ chargers across locations — need fleet-wide visibility and SLA tracking
+• Hotels and hospitality — installed chargers as a guest amenity, but can't afford downtime or bad reviews ("charger didn't work")
+• Parking lot operators — chargers generate revenue, downtime = lost income, need usage analytics
+• Retail and shopping centers — EV charging as foot traffic driver, need uptime and session data
+• Property managers and real estate — managing chargers across buildings, need centralized control
+• Fleet operators — depot charging for electric vans/trucks, need scheduling and reliability`],
+
+  ["pain_points", `• Charger downtime is invisible — operators don't know a charger is down until a customer complains
+• No cross-vendor visibility — most operators have 2-3 charger brands, each with its own app, no unified view
+• Reactive maintenance — fixing after failure instead of preventing it, costly truck rolls
+• Revenue leakage — broken chargers don't generate income but still cost electricity and parking space
+• Manual monitoring — someone physically checks chargers or waits for complaints
+• Scaling pain — managing 5 chargers is fine, managing 50+ across sites without tooling is chaos
+• Guest/customer experience — a broken charger at a hotel means a bad review, not just lost revenue`],
+
+  ["key_messages", `• "See every charger, one dashboard" — unified view regardless of hardware brand
+• "Know before it breaks" — predictive alerts, not reactive firefighting
+• "Fix from your phone" — remote diagnostics and restart, no truck roll needed
+• "Every session, every dollar" — full analytics on usage, revenue, and performance
+• "Works with what you have" — vendor-agnostic, no hardware lock-in
+• "5 minutes to connect" — fast onboarding, no complex integration`],
+
+  ["competitors_diff", `What makes Go2EV different:
+• Vendor-agnostic — competitors are usually tied to one hardware brand. Go2EV works with ANY charger.
+• AI-powered predictions — not just monitoring (what happened) but predictions (what's about to happen)
+• Built for non-technical operators — hotel managers, parking operators, not just EV specialists
+• Fast time to value — connect chargers in minutes, not weeks of integration work
+• Affordable at any scale — pricing that works for 10 chargers or 1000`],
+
+  ["brand_voice", `Professional but energetic. Data-driven but human. Peer-to-peer, like a fellow business owner sharing a solution — not a vendor pitching a product.
+
+Confident without being arrogant. Empathetic — we understand the pain because we've seen it.
+
+Language level: accessible to a hotel manager who is not technical. No jargon unless it's industry-standard (like "CPO" or "uptime").
+
+Concrete over abstract — specific numbers, specific actions, specific outcomes. "Shows success rate for every station" not "provides comprehensive analytics".`],
+
+  ["language", "en"],
+
+  // ── VIDEO SETTINGS ──
+  ["## VIDEO SETTINGS", ""],
+  ["avatar", "skyler"],
+  ["caption_style", "bold-pop"],
+  ["broll_model", "ltx-2"],
+
+  // ── GENERATION ──
+  ["## GENERATION", ""],
+  ["batch_size", "5"],
+  ["batch_prompt", ""],
+
+  // ── NOTIFICATIONS ──
+  ["## NOTIFICATIONS", ""],
+  ["alert_email", ""],
+  ["alert_slack_webhook", ""],
+];
+
+const SCENARIO_HEADERS = [
+  "id", "batch_id", "title", "framework", "script", "scenes_json",
+  "duration_sec", "status", "reel_url", "publish_urls", "cost",
+  "created_at", "generated_at", "published_at", "error",
+];
+
+const LOG_HEADERS = ["timestamp", "action", "scenario_id", "message", "cost"];
 
 async function main() {
   const auth = new google.auth.GoogleAuth({
@@ -23,19 +109,15 @@ async function main() {
 
   for (const tab of requiredTabs) {
     if (!existingTabs.includes(tab)) {
-      requests.push({
-        addSheet: { properties: { title: tab } },
-      });
+      requests.push({ addSheet: { properties: { title: tab } } });
     }
   }
 
-  // Delete default "Sheet1" if it exists and we're adding our tabs
-  if (existingTabs.includes("Sheet1") && requests.length > 0) {
+  // Delete default "Sheet1" if present
+  if (existingTabs.includes("Sheet1")) {
     const sheet1 = spreadsheet.data.sheets?.find((s) => s.properties?.title === "Sheet1");
     if (sheet1?.properties?.sheetId !== undefined) {
-      requests.push({
-        deleteSheet: { sheetId: sheet1.properties.sheetId },
-      });
+      requests.push({ deleteSheet: { sheetId: sheet1.properties.sheetId } });
     }
   }
 
@@ -47,43 +129,73 @@ async function main() {
     console.log("Created tabs:", requiredTabs.filter((t) => !existingTabs.includes(t)));
   }
 
-  // 3. Write headers
-  const CONFIG_HEADERS = [
-    "product_name", "website", "product_description", "target_audience",
-    "brand_voice", "language", "avatar", "caption_style", "broll_model",
-    "batch_size", "batch_prompt", "alert_email", "alert_slack_webhook",
-  ];
+  // 3. Clear Config tab (in case of re-run)
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Config!A:B",
+  });
 
-  const CONFIG_TEST_ROW = [
-    "Go2EV", "go2ev.com", "AI monitoring for EV chargers",
-    "CPO operators, hotels, parking lots", "Professional but energetic",
-    "en", "skyler", "bold-pop", "ltx-2", "5", "", "test@example.com", "",
-  ];
+  // 4. Write vertical Config
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `Config!A1:B${CONFIG_ROWS.length}`,
+    valueInputOption: "RAW",
+    requestBody: { values: CONFIG_ROWS },
+  });
 
-  const SCENARIO_HEADERS = [
-    "id", "batch_id", "title", "framework", "script", "scenes_json",
-    "duration_sec", "status", "reel_url", "publish_urls", "cost",
-    "created_at", "generated_at", "published_at", "error",
-  ];
-
-  const LOG_HEADERS = ["timestamp", "action", "scenario_id", "message", "cost"];
-
+  // 5. Write Scenarios + Log headers
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId: SPREADSHEET_ID,
     requestBody: {
       valueInputOption: "RAW",
       data: [
-        { range: "Config!A1:M1", values: [CONFIG_HEADERS] },
-        { range: "Config!A2:M2", values: [CONFIG_TEST_ROW] },
         { range: "Scenarios!A1:O1", values: [SCENARIO_HEADERS] },
         { range: "Log!A1:E1", values: [LOG_HEADERS] },
       ],
     },
   });
 
-  console.log("✓ Headers written to Config, Scenarios, Log");
-  console.log("✓ Test config row added to Config tab");
-  console.log(`\nSheet ready: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
+  // 6. Format Config tab — widen column B
+  const configSheet = (await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID }))
+    .data.sheets?.find((s) => s.properties?.title === "Config");
+
+  if (configSheet?.properties?.sheetId !== undefined) {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SPREADSHEET_ID,
+      requestBody: {
+        requests: [
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId: configSheet.properties.sheetId,
+                dimension: "COLUMNS",
+                startIndex: 0,
+                endIndex: 1,
+              },
+              properties: { pixelSize: 200 },
+              fields: "pixelSize",
+            },
+          },
+          {
+            updateDimensionProperties: {
+              range: {
+                sheetId: configSheet.properties.sheetId,
+                dimension: "COLUMNS",
+                startIndex: 1,
+                endIndex: 2,
+              },
+              properties: { pixelSize: 800 },
+              fields: "pixelSize",
+            },
+          },
+        ],
+      },
+    });
+  }
+
+  console.log(`✓ Config tab: ${CONFIG_ROWS.length} rows (vertical key-value)`);
+  console.log("✓ Scenarios + Log headers written");
+  console.log(`\nSheet: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
 }
 
 main().catch(console.error);
