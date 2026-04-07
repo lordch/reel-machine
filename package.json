@@ -1,0 +1,38 @@
+{
+  "name": "reel-machine",
+  "version": "1.0.0",
+  "description": "Automated short-form video ad pipeline",
+  "scripts": {
+    "studio": "npx remotion studio src/index.ts",
+    "render": "npx remotion render src/index.ts GeneratedReel out/reel.mp4",
+    "pipeline:audio": "npx tsx src/pipeline/generate-audio.ts",
+    "pipeline:split": "npx tsx src/pipeline/split-avatar-audio.ts",
+    "pipeline:avatar": "npx tsx src/pipeline/generate-avatar.ts",
+    "pipeline:broll": "npx tsx src/pipeline/fetch-broll.ts",
+    "pipeline:music": "npx tsx src/pipeline/generate-music.ts",
+    "pipeline:assemble": "npx tsx src/pipeline/assemble.ts",
+    "orchestrate": "npx tsx src/orchestrate.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fal-ai/client": "^1.9.4",
+    "@remotion/cli": "^4.0.438",
+    "@remotion/google-fonts": "^4.0.438",
+    "@remotion/renderer": "^4.0.438",
+    "@remotion/transitions": "^4.0.438",
+    "dotenv": "^17.3.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "remotion": "^4.0.438",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
