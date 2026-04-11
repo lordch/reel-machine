@@ -4,6 +4,27 @@
 
 B-roll should look like footage from a **real documentary or commercial**, not like AI art. Every shot must feel like it was filmed by a real camera crew at a real location. If it looks sci-fi, futuristic, or "techy" — it's wrong.
 
+## Creative Direction
+
+Think like a **commercial director**, not a literal illustrator.
+
+The worst b-roll is a visual subtitle — showing exactly what the narrator says. The best b-roll creates a FEELING that amplifies the words.
+
+When the narrator says "charger is broken" — don't show a broken charger. Show: morning dew on an empty parking spot. A hotel lobby clock ticking. Rain collecting on an unplugged cable. The ABSENCE of the problem tells the story.
+
+When the narrator says "one dashboard" — don't always show a dashboard. Show: a person closing their laptop and walking out into sunlight. A coffee cup being picked up calmly. The RESULT of having control.
+
+Mix these visual approaches across your scenarios:
+- **Cause & effect**: show what happens BEFORE or AFTER the narrated moment
+- **Metaphor**: a key turning, coffee being poured, sunrise clearing fog
+- **Scale & contrast**: aerial views vs intimate details, chaos vs calm
+- **Atmosphere**: weather, light, time passing — let the environment carry emotion
+- **Sensory texture**: water droplets, cable textures, LED reflections, steam, glass
+
+The literal shot (dashboard on screen, phone in hand) is fine — but it should be at most HALF of your b-roll. The other half should surprise.
+
+Every b-roll prompt you write should pass this test: "Could this shot appear in a real TV commercial?" If it feels like a stock photo — rewrite it.
+
 ## Prompt Template
 
 ```

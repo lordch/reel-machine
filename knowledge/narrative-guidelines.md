@@ -40,23 +40,21 @@ The script follows a natural arc without explicit framework markers:
 
 2. **Introduce the product clearly** (1 sentence) — say WHAT Go2EV IS. "Go2EV is monitoring software for EV chargers." Not just "Go2EV fixes that." The viewer must understand the product category.
 
-3. **Show the product working** (2-4 sentences, this is the biggest block) — concrete, tangible benefits. Not features in abstract. Show what changes for THEM:
-   - "Shows success rate for every station in real time"
-   - "You get an alert when something drops, not when the station is already offline"
-   - "One dashboard, every station, every session"
-   - "Fix most issues from your phone"
-   Each benefit sentence should be paired with a b-roll scene that illustrates it.
+3. **Show the product working** (2-4 sentences, this is the biggest block) — concrete, tangible benefits. Not features in abstract. Show what changes for THEM. Each benefit should feel specific and fresh — never reuse the same phrasing across scenarios. Find new ways to express the same value every time. Each benefit sentence should be paired with a b-roll scene that illustrates it.
 
 4. **Close with CTA** (1 sentence) — "go2ev.com" or "Start free at go2ev.com."
 
 ## Hook Techniques
 
-What works for Go2EV:
-- **Relatable situation**: "You get a call from a guest..." / "You walk outside to check the charger..."
-- **Pain question**: "How do you know your chargers are working right now?"
-- **Trend opener**: "More and more hotels are installing EV chargers. But who's watching them?"
-- **The math**: "Every hour your charger is down costs you forty dollars."
-- **Contrast**: "Installing a charger is easy. Keeping it running? That's the hard part."
+These are HOOK TYPES — do not copy the example sentences. Invent fresh angles every time.
+
+- **Relatable situation**: Put the viewer in a specific moment they recognize. (e.g. a phone call, a walk to the parking lot, a Monday morning surprise)
+- **Pain question**: Ask something they can't confidently answer right now.
+- **Trend opener**: Start with an industry shift, then reveal the hidden problem.
+- **The math**: Lead with a concrete number that reframes the problem.
+- **Contrast**: Set up an easy thing vs the hard thing nobody talks about.
+- **Story**: Start mid-action, like opening a movie scene. No setup, just drop the viewer in.
+- **Provocation**: Challenge an assumption the audience holds.
 
 What kills hooks:
 - Starting with the company name ("Go2EV is...")

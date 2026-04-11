@@ -97,67 +97,42 @@ Defaults applied automatically: avatar (skyler), language (en), captionStyle (bo
 - Consecutive scenes with the same `musicSection` are merged into one music section.
 - **Do NOT include** `avatar`, `music`, `captionStyle`, or `branding` unless the user explicitly asks to customize them.
 
-## Complete example
+## Complete example (structure only)
 
 ```json
 {
-  "id": "phone-call-30s",
-  "meta": { "title": "There Has to Be a Better Way", "targetDuration": 30 },
-  "script": "You get a call from a guest. The EV charger isn't working. You walk outside, unplug it, plug it back in. It works. Next week, same thing. Different guest. You think, there has to be a better way. There is. Go2EV is monitoring software for EV chargers. It tells you when something breaks before your guests do. And you can fix most issues remotely, right from your phone. No more parking lot visits. Go2ev.com.",
+  "id": "example-30s",
+  "meta": { "title": "Example Title", "targetDuration": 30 },
+  "script": "Full continuous narration text here. Every scene's scriptSegment must be an exact substring of this field.",
   "scenes": [
     {
       "id": "hook",
       "musicSection": "intro",
-      "scriptSegment": "You get a call from a guest. The EV charger isn't working.",
+      "scriptSegment": "Full continuous narration text here.",
       "visual": "avatar"
     },
     {
-      "id": "walkout",
+      "id": "context",
       "musicSection": "intro",
-      "scriptSegment": "You walk outside, unplug it, plug it back in. It works.",
+      "scriptSegment": "Every scene's scriptSegment",
       "visual": "broll",
-      "brollAiPrompt": "Close-up of hands unplugging and replugging a white EV charging cable from a modern charging station at a hotel parking lot. Evening light, warm tones. Slow deliberate movement. Shallow depth of field, 35mm film look. No text, no logos, no watermarks."
+      "brollAiPrompt": "Detailed cinematic prompt following the b-roll prompting guide. Shot type, camera movement, subject, location, lighting, lens. Photorealistic, 35mm film look. No text, no logos, no watermarks."
     },
     {
-      "id": "repeat",
-      "musicSection": "intro",
-      "scriptSegment": "Next week, same thing. Different guest. You think, there has to be a better way.",
+      "id": "product",
+      "musicSection": "product",
+      "scriptSegment": "must be an exact substring",
       "visual": "avatar"
     },
     {
-      "id": "solution-intro",
+      "id": "benefit",
       "musicSection": "product",
-      "scriptSegment": "There is. Go2EV is monitoring software for EV chargers.",
+      "scriptSegment": "of this field.",
       "visual": "broll",
-      "brollAiPrompt": "Over-the-shoulder shot of a person at a desk looking at a laptop. The screen shows a clean dark-themed dashboard with rows of green bar charts, a sidebar with small colored pie charts, and a grid of status cards with green and orange indicators. Warm desk lamp from the side. Photorealistic, 35mm film look, shallow depth of field. No text, no logos, no watermarks, no readable content on screen."
-    },
-    {
-      "id": "benefit-alerts",
-      "musicSection": "product",
-      "scriptSegment": "It tells you when something breaks before your guests do.",
-      "visual": "avatar"
-    },
-    {
-      "id": "benefit-remote",
-      "musicSection": "product",
-      "scriptSegment": "And you can fix most issues remotely, right from your phone.",
-      "visual": "broll",
-      "brollAiPrompt": "Close-up of an EV charging station's LED panel switching from blinking red to solid green. Night scene, rain droplets on the charger surface catching reflections from the LED. Slow push-in. Photorealistic, 35mm film look, shallow depth of field. No text, no logos, no watermarks, no screens with visible content."
-    },
-    {
-      "id": "payoff",
-      "musicSection": "cta",
-      "scriptSegment": "No more parking lot visits.",
-      "visual": "avatar"
-    },
-    {
-      "id": "cta",
-      "musicSection": "cta",
-      "scriptSegment": "Go2ev.com.",
-      "visual": "avatar"
+      "brollAiPrompt": "Another cinematic prompt — different shot type, location, and time of day from the previous b-roll."
     }
   ]
 }
 ```
 
-Note: This example has two avatar scenes at the end (payoff + cta) — acceptable when the last scene is a short CTA (< 3 words).
+Note: Two avatar scenes at the end are acceptable when the last scene is a short CTA (< 3 words).
