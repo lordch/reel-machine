@@ -55,9 +55,11 @@ export interface BrollModelEntry {
   minDuration: number;
   maxDuration: number;
   validDurations?: number[];
-  maxResolution: "540p" | "720p" | "1080p" | "4k";
+  maxResolution: "480p" | "540p" | "720p" | "1080p" | "4k";
   costPerSec: number;
   description: string;
+  extraParams?: Record<string, unknown>;
+  durationFormat?: "with_s";
 }
 
 export const BROLL_MODEL_LIBRARY: Record<string, BrollModelEntry> = {
@@ -66,16 +68,18 @@ export const BROLL_MODEL_LIBRARY: Record<string, BrollModelEntry> = {
     minDuration: 3,
     maxDuration: 15,
     maxResolution: "1080p",
-    costPerSec: 0.1,
-    description: "Kling 3.0 Standard — current default, good balance of cost/quality",
+    costPerSec: 0.084,
+    description: "Kling 3.0 Standard no audio — $0.084/s, proven quality",
+    extraParams: { audio: false },
   },
   "kling-3.0-pro": {
     falEndpoint: "fal-ai/kling-video/v3/pro/text-to-video",
     minDuration: 3,
     maxDuration: 15,
     maxResolution: "1080p",
-    costPerSec: 0.224,
-    description: "Kling 3.0 Pro — multi-shot, better scene coherence",
+    costPerSec: 0.126,
+    description: "Kling 3.0 Pro no audio — $0.126/s, best coherence",
+    extraParams: { audio: false },
   },
   "kling-2.6-pro": {
     falEndpoint: "fal-ai/kling-video/v2.6/pro/text-to-video",
@@ -84,7 +88,8 @@ export const BROLL_MODEL_LIBRARY: Record<string, BrollModelEntry> = {
     validDurations: [5, 10],
     maxResolution: "1080p",
     costPerSec: 0.07,
-    description: "Kling 2.6 Pro — cheaper, older gen, min 5s clips",
+    description: "Kling 2.6 Pro no audio — cheaper, older gen",
+    extraParams: { audio: false },
   },
   "veo-3-fast": {
     falEndpoint: "fal-ai/veo3/fast",
@@ -92,39 +97,49 @@ export const BROLL_MODEL_LIBRARY: Record<string, BrollModelEntry> = {
     maxDuration: 8,
     maxResolution: "1080p",
     costPerSec: 0.25,
-    description: "Veo 3 Fast — best realism & physics, premium tier",
+    description: "Veo 3 Fast — best realism, premium tier",
+    extraParams: { generate_audio: false },
+    durationFormat: "with_s",
   },
-  "hailuo-2.3-pro": {
-    falEndpoint: "fal-ai/minimax/hailuo-2.3/pro/text-to-video",
-    minDuration: 6,
-    maxDuration: 6,
+  "veo-3.1-lite": {
+    falEndpoint: "fal-ai/veo3.1/lite",
+    minDuration: 4,
+    maxDuration: 8,
+    validDurations: [4, 6, 8],
+    maxResolution: "720p",
+    costPerSec: 0.03,
+    description: "Veo 3.1 Lite 720p no audio — $0.03/s, best realism at budget price",
+    extraParams: { generate_audio: false, resolution: "720p" },
+    durationFormat: "with_s",
+  },
+  "veo-3.1-lite-1080": {
+    falEndpoint: "fal-ai/veo3.1/lite",
+    minDuration: 4,
+    maxDuration: 8,
+    validDurations: [4, 6, 8],
     maxResolution: "1080p",
-    costPerSec: 0.08,
-    description: "MiniMax Hailuo 2.3 Pro — flat $0.49/video, ~6s, consistent 1080p",
+    costPerSec: 0.05,
+    description: "Veo 3.1 Lite 1080p no audio — $0.05/s, great realism",
+    extraParams: { generate_audio: false, resolution: "1080p" },
+    durationFormat: "with_s",
   },
-  "hailuo-2.3-std": {
-    falEndpoint: "fal-ai/minimax/hailuo-2.3/standard/text-to-video",
+  "hailuo-02-std": {
+    falEndpoint: "fal-ai/minimax/hailuo-02/standard/text-to-video",
     minDuration: 6,
-    maxDuration: 6,
+    maxDuration: 10,
+    validDurations: [6, 10],
     maxResolution: "720p",
     costPerSec: 0.047,
-    description: "MiniMax Hailuo 2.3 Standard — flat $0.28/video, ~6s, 768p",
+    description: "MiniMax Hailuo-02 Standard — $0.28/video, 6 or 10s, budget 720p",
   },
-  "wan-2.6": {
-    falEndpoint: "fal-ai/wan/v2.6/text-to-video",
-    minDuration: 3,
+  "hailuo-02-pro": {
+    falEndpoint: "fal-ai/minimax/hailuo-02/pro/text-to-video",
+    minDuration: 6,
     maxDuration: 10,
-    maxResolution: "720p",
-    costPerSec: 0.05,
-    description: "Wan 2.6 — budget option, 720p max, good for drafts",
-  },
-  "ltx-2": {
-    falEndpoint: "fal-ai/ltx-video/v2",
-    minDuration: 3,
-    maxDuration: 10,
-    maxResolution: "720p",
-    costPerSec: 0.04,
-    description: "LTX-2 — cheapest, lower quality, good for previews",
+    validDurations: [6, 10],
+    maxResolution: "1080p",
+    costPerSec: 0.08,
+    description: "MiniMax Hailuo-02 Pro — $0.49/video, 6 or 10s, 1080p",
   },
   "vidu-q3": {
     falEndpoint: "fal-ai/vidu/q3/text-to-video",
@@ -132,7 +147,56 @@ export const BROLL_MODEL_LIBRARY: Record<string, BrollModelEntry> = {
     maxDuration: 8,
     maxResolution: "1080p",
     costPerSec: 0.077,
-    description: "Vidu Q3 — cheapest with native audio, good value at 1080p",
+    description: "Vidu Q3 no audio — $0.077/s at 1080p",
+    extraParams: { bgm: false },
+  },
+  // ── Budget / draft models ──
+  "wan-2.5": {
+    falEndpoint: "fal-ai/wan-25-preview/text-to-video",
+    minDuration: 5,
+    maxDuration: 10,
+    validDurations: [5, 10],
+    maxResolution: "480p",
+    costPerSec: 0.05,
+    description: "Wan 2.5 480p — cheapest, good for drafts, fast processing",
+  },
+  "ltx-2.3-fast": {
+    falEndpoint: "fal-ai/ltx-2.3/text-to-video/fast",
+    minDuration: 6,
+    maxDuration: 20,
+    maxResolution: "1080p",
+    costPerSec: 0.04,
+    description: "LTX 2.3 Fast — cheapest 1080p, open-source, 6-20s",
+    extraParams: { generate_audio: false },
+  },
+  "ltx-2.0-fast": {
+    falEndpoint: "fal-ai/ltx-2/text-to-video/fast",
+    minDuration: 6,
+    maxDuration: 20,
+    maxResolution: "1080p",
+    costPerSec: 0.04,
+    description: "LTX 2.0 Fast — budget 1080p, 6-20s",
+    extraParams: { generate_audio: false },
+  },
+  "kling-1.6-std": {
+    falEndpoint: "fal-ai/kling-video/v1.6/standard/text-to-video",
+    minDuration: 5,
+    maxDuration: 10,
+    validDurations: [5, 10],
+    maxResolution: "1080p",
+    costPerSec: 0.045,
+    description: "Kling 1.6 Standard no audio — budget, older gen",
+    extraParams: { audio: false },
+  },
+  "kling-2.5-turbo": {
+    falEndpoint: "fal-ai/kling-video/v2.5-turbo/pro/text-to-video",
+    minDuration: 5,
+    maxDuration: 10,
+    validDurations: [5, 10],
+    maxResolution: "1080p",
+    costPerSec: 0.07,
+    description: "Kling 2.5 Turbo Pro no audio — good motion",
+    extraParams: { audio: false },
   },
 };
 

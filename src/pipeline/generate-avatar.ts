@@ -32,7 +32,7 @@ interface HeyGenVideoStatus {
     video_id: string;
     status: "processing" | "completed" | "failed";
     video_url?: string;
-    error?: string;
+    error?: unknown;
   };
 }
 
@@ -173,7 +173,8 @@ async function pollVideoStatus(videoId: string): Promise<string> {
     }
 
     if (status === "failed") {
-      throw new Error(`HeyGen video generation failed: ${error || "unknown error"}`);
+      const errorDetail = typeof error === "object" ? JSON.stringify(error) : (error || "unknown error");
+      throw new Error(`HeyGen video generation failed: ${errorDetail}`);
     }
 
     process.stdout.write(".");

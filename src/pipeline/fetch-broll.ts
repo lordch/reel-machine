@@ -57,9 +57,10 @@ async function generateAiVideo(prompt: string, outputPath: string, duration: num
     result = await fal.subscribe(model.falEndpoint, {
       input: {
         prompt,
-        duration: String(clampedDuration),
+        duration: model.durationFormat === "with_s" ? `${clampedDuration}s` : String(clampedDuration),
         aspect_ratio: "9:16",
         negative_prompt: DEFAULTS.brollNegativePrompt,
+        ...(model.extraParams || {}),
       },
       logs: true,
       onQueueUpdate: (update: any) => {
