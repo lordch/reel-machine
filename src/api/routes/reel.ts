@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { readConfig, readScenarios, updateScenarioStatus, appendLog } from "../sheets.js";
 import { authMiddleware } from "../auth.js";
 import { saveScenario } from "../../pipeline/schema.js";
+import { DEFAULTS } from "../../pipeline/config.js";
 import { orchestrate } from "../../orchestrate.js";
 import { getCostReport } from "../../pipeline/costs.js";
 
@@ -45,6 +46,11 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
       logo: "logo.svg",
       website: config.website,
     };
+
+    // Apply broll model from Sheet config
+    if (config.broll_model) {
+      DEFAULTS.brollModel = config.broll_model;
+    }
 
     // Save scenario.json to disk (pipeline expects it there)
     saveScenario(scenarioData);

@@ -85,7 +85,7 @@ Concrete over abstract — specific numbers, specific actions, specific outcomes
 const SCENARIO_HEADERS = [
   "id", "batch_id", "title", "framework", "script", "scenes_json",
   "duration_sec", "status", "reel_url", "publish_urls", "cost",
-  "created_at", "generated_at", "published_at", "error",
+  "scenario_cost", "created_at", "generated_at", "published_at", "error",
 ];
 
 const LOG_HEADERS = ["timestamp", "action", "scenario_id", "message", "cost"];
@@ -149,7 +149,7 @@ async function main() {
     requestBody: {
       valueInputOption: "RAW",
       data: [
-        { range: "Scenarios!A1:O1", values: [SCENARIO_HEADERS] },
+        { range: "Scenarios!A1:P1", values: [SCENARIO_HEADERS] },
         { range: "Log!A1:E1", values: [LOG_HEADERS] },
       ],
     },

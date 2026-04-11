@@ -81,6 +81,7 @@ export interface ScenarioRow {
   reel_url: string;
   publish_urls: string;
   cost: number;
+  scenario_cost: number;
   created_at: string;
   generated_at: string;
   published_at: string;
@@ -90,14 +91,14 @@ export interface ScenarioRow {
 const SCENARIO_HEADERS = [
   "id", "batch_id", "title", "framework", "script", "scenes_json",
   "duration_sec", "status", "reel_url", "publish_urls", "cost",
-  "created_at", "generated_at", "published_at", "error",
+  "scenario_cost", "created_at", "generated_at", "published_at", "error",
 ];
 
 export async function readScenarios(): Promise<ScenarioRow[]> {
   const sheets = getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: spreadsheetId(),
-    range: "Scenarios!A1:O1000",
+    range: "Scenarios!A1:P1000",
   });
 
   const rows = res.data.values || [];
@@ -157,7 +158,7 @@ export async function updateScenarioStatus(
   // Read current row
   const current = await sheets.spreadsheets.values.get({
     spreadsheetId: spreadsheetId(),
-    range: `Scenarios!A${rowIndex}:O${rowIndex}`,
+    range: `Scenarios!A${rowIndex}:P${rowIndex}`,
   });
 
   const currentValues = current.data.values?.[0] || [];
@@ -168,7 +169,7 @@ export async function updateScenarioStatus(
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: spreadsheetId(),
-    range: `Scenarios!A${rowIndex}:O${rowIndex}`,
+    range: `Scenarios!A${rowIndex}:P${rowIndex}`,
     valueInputOption: "RAW",
     requestBody: { values: [updatedRow] },
   });
