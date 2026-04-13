@@ -1,0 +1,9 @@
+node_modules
+dist
+out
+.env
+.git
+.claude
+scenarios
+*.mp4
+*.mp3
