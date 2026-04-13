@@ -8,7 +8,6 @@ import { setTtsReplacements } from "../../pipeline/generate-audio.js";
 import { orchestrate } from "../../orchestrate.js";
 import { getCostReport } from "../../pipeline/costs.js";
 import { uploadToR2 } from "../storage.js";
-import { notifyReelComplete, notifyReelFailed } from "../notifications.js";
 
 const router = Router();
 
@@ -81,7 +80,7 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
     res.json({ status: "generating", scenarioId });
 
     // Run pipeline in background
-    runPipeline(scenarioId, scenarioData.id, scenario.title, config.alert_email).catch(() => {});
+    runPipeline(scenarioId, scenarioData.id, scenario.title).catch(() => {});
 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
@@ -89,7 +88,27 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
   }
 });
 
-async function runPipeline(sheetId: string, pipelineId: string, title: string, alertEmail: string): Promise<void> {
+// Update scenario status (used by n8n)
+router.post("/update-status", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { scenarioId, status, publish_urls } = req.body;
+    if (!scenarioId || !status) {
+      res.status(400).json({ error: "scenarioId and status required" });
+      return;
+    }
+    const updates: Record<string, unknown> = { status };
+    if (publish_urls) updates.publish_urls = publish_urls;
+    if (status === "published") updates.published_at = new Date().toISOString();
+    await updateScenarioStatus(scenarioId, updates as any);
+    await appendLog({ action: "status-update", scenario_id: scenarioId, message: `Status → ${status}` });
+    res.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.status(500).json({ error: message });
+  }
+});
+
+async function runPipeline(sheetId: string, pipelineId: string, title: string): Promise<void> {
   try {
     console.log(`\nStarting pipeline for "${pipelineId}" (sheet row: ${sheetId})...`);
 
@@ -145,7 +164,8 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string, a
 
     console.log(`✓ Pipeline complete for "${pipelineId}"`);
 
-    await notifyReelComplete(title, reelUrl, totalCost, alertEmail);
+    // Notify n8n
+    await notifyN8n("reel_complete", { scenarioId: sheetId, pipelineId, title, reelUrl, cost: totalCost });
 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
@@ -162,11 +182,27 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string, a
       message: `Pipeline failed: ${message.substring(0, 500)}`,
     }).catch(() => {});
 
-    await notifyReelFailed(title, message.substring(0, 200), alertEmail);
+    await notifyN8n("reel_failed", { scenarioId: sheetId, pipelineId, title, error: message.substring(0, 200) });
 
   } finally {
     generating = false;
     generatingId = null;
+  }
+}
+
+async function notifyN8n(event: string, data: Record<string, unknown>): Promise<void> {
+  const webhookUrl = process.env.N8N_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  try {
+    await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event, ...data }),
+    });
+    console.log(`  n8n notified: ${event}`);
+  } catch (err) {
+    console.warn(`  ⚠ n8n webhook failed: ${err instanceof Error ? err.message : err}`);
   }
 }
 

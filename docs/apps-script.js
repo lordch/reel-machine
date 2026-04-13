@@ -1,6 +1,6 @@
 // Paste this into: Google Sheet → Extensions → Apps Script
 
-const API_URL = 'https://superacute-kirk-dissipative.ngrok-free.dev';
+const API_URL = 'https://reel.darkhelmettechnologies.com';
 const API_SECRET = 'reel-machine-test-secret-2026';
 
 function onOpen() {
@@ -18,16 +18,15 @@ function generateScenarios() {
       method: 'post',
       headers: {
         'Authorization': 'Bearer ' + API_SECRET,
-        'ngrok-skip-browser-warning': 'true',
       },
       contentType: 'application/json',
       muteHttpExceptions: true,
     });
     const result = JSON.parse(response.getContentText());
     if (result.success) {
-      ui.alert('✅ ' + result.message + '\nProduct: ' + result.config.product_name);
+      ui.alert('Generated ' + result.count + ' scenarios:\n\n' + result.titles.join('\n') + '\n\nCost: $' + (result.cost || 0).toFixed(4));
     } else {
-      ui.alert('❌ Error: ' + (result.error || 'Unknown error'));
+      ui.alert('Error: ' + (result.error || 'Unknown error'));
     }
   } catch (e) {
     ui.alert('Connection error: ' + e.message);
@@ -39,14 +38,16 @@ function pollSheets() {
   try {
     const response = UrlFetchApp.fetch(API_URL + '/api/poll-sheets', {
       method: 'post',
-      headers: { 'ngrok-skip-browser-warning': 'true' },
+      headers: {
+        'Authorization': 'Bearer ' + API_SECRET,
+      },
       muteHttpExceptions: true,
     });
     const result = JSON.parse(response.getContentText());
     if (result.success) {
-      ui.alert('📊 Total scenarios: ' + result.totalScenarios + '\n\n' + result.actions.join('\n'));
+      ui.alert('Total scenarios: ' + result.totalScenarios + '\n\n' + result.actions.join('\n'));
     } else {
-      ui.alert('❌ Error: ' + (result.error || 'Unknown error'));
+      ui.alert('Error: ' + (result.error || 'Unknown error'));
     }
   } catch (e) {
     ui.alert('Connection error: ' + e.message);

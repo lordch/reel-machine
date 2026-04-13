@@ -1,0 +1,204 @@
+{
+  "name": "Reel Machine",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "triggerAtHour": 10, "triggerAtDay": 1 },
+            { "triggerAtHour": 10, "triggerAtDay": 4 }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cron: Mon+Thu 10:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 100]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://reel.darkhelmettechnologies.com/api/poll-sheets",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer reel-machine-test-secret-2026" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "poll-sheets",
+      "name": "Poll Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 100]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reel-pipeline",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Pipeline Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 400],
+      "webhookId": "reel-pipeline"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [420, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.event }}",
+              "rightValue": "reel_complete",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "check-event",
+      "name": "Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [640, 400]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reel-machine@darkhelmettechnologies.com",
+        "toEmail": "={{ $json.alertEmail || 'michalchelminski@gmail.com' }}",
+        "subject": "=✅ Reel ready: {{ $json.title }}",
+        "emailType": "html",
+        "message": "=<h2>{{ $json.title }}</h2><p>Video: <a href=\"{{ $json.reelUrl }}\">Watch reel</a></p><p>Cost: ${{ $json.cost.toFixed(2) }}</p><br><p><a href=\"https://reel.darkhelmettechnologies.com/webhook/approve-publish?scenarioId={{ $json.scenarioId }}&title={{ encodeURIComponent($json.title) }}&reelUrl={{ encodeURIComponent($json.reelUrl) }}\" style=\"background:#22c55e;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;\">✅ Approve & Publish</a></p>",
+        "options": {}
+      },
+      "id": "send-email-success",
+      "name": "Email: Reel Ready",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [880, 340]
+    },
+    {
+      "parameters": {
+        "fromEmail": "reel-machine@darkhelmettechnologies.com",
+        "toEmail": "={{ $json.alertEmail || 'michalchelminski@gmail.com' }}",
+        "subject": "=❌ Reel failed: {{ $json.title }}",
+        "emailType": "html",
+        "message": "=<h2>Pipeline failed: {{ $json.title }}</h2><p>Error: {{ $json.error }}</p><p>Status reverted to approved for retry.</p>",
+        "options": {}
+      },
+      "id": "send-email-fail",
+      "name": "Email: Failed",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [880, 500]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "approve-publish",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "approve-webhook",
+      "name": "Approve Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 700],
+      "webhookId": "approve-publish"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://reel.darkhelmettechnologies.com/api/update-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer reel-machine-test-secret-2026" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "scenarioId", "value": "={{ $json.query.scenarioId }}" },
+            { "name": "status", "value": "approved_final" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update-status",
+      "name": "Update Sheet: approved_final",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 700]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "title": "={{ $json.query.title }}",
+        "categoryId": 28,
+        "options": {
+          "privacyStatus": "public",
+          "description": "={{ $json.query.title }}\\n\\nGenerated by Reel Machine"
+        }
+      },
+      "id": "youtube-upload",
+      "name": "YouTube Upload",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [640, 640],
+      "disabled": true
+    },
+    {
+      "parameters": {},
+      "id": "respond-approved",
+      "name": "Respond: Published",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [880, 700]
+    }
+  ],
+  "connections": {
+    "Cron: Mon+Thu 10:00": {
+      "main": [[{ "node": "Poll Sheets", "type": "main", "index": 0 }]]
+    },
+    "Pipeline Webhook": {
+      "main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+    },
+    "Respond OK": {
+      "main": [[{ "node": "Success?", "type": "main", "index": 0 }]]
+    },
+    "Success?": {
+      "main": [
+        [{ "node": "Email: Reel Ready", "type": "main", "index": 0 }],
+        [{ "node": "Email: Failed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Approve Webhook": {
+      "main": [[{ "node": "Update Sheet: approved_final", "type": "main", "index": 0 }]]
+    },
+    "Update Sheet: approved_final": {
+      "main": [[{ "node": "Respond: Published", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
