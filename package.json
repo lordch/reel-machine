@@ -20,6 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.82.0",
+    "@aws-sdk/client-s3": "^3.1030.0",
     "@fal-ai/client": "^1.9.4",
     "@remotion/cli": "^4.0.438",
     "@remotion/google-fonts": "^4.0.438",

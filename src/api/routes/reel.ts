@@ -5,6 +5,7 @@ import { saveScenario } from "../../pipeline/schema.js";
 import { DEFAULTS } from "../../pipeline/config.js";
 import { orchestrate } from "../../orchestrate.js";
 import { getCostReport } from "../../pipeline/costs.js";
+import { uploadToR2 } from "../storage.js";
 
 const router = Router();
 
@@ -85,9 +86,21 @@ async function runPipeline(sheetId: string, pipelineId: string): Promise<void> {
       totalCost = report.total;
     } catch {}
 
+    // Upload to R2 if configured
+    let reelUrl = outputPath;
+    if (process.env.R2_ACCESS_KEY_ID) {
+      try {
+        const date = new Date().toISOString().slice(0, 10);
+        const remoteName = `reels/${date}-${pipelineId}.mp4`;
+        reelUrl = await uploadToR2(outputPath, remoteName);
+      } catch (err) {
+        console.warn(`  ⚠ R2 upload failed, using local path: ${err instanceof Error ? err.message : err}`);
+      }
+    }
+
     await updateScenarioStatus(sheetId, {
       status: "ready_for_review",
-      reel_url: outputPath, // local path for now, R2 URL later
+      reel_url: reelUrl,
       cost: totalCost,
       generated_at: new Date().toISOString(),
       error: "",
@@ -96,7 +109,7 @@ async function runPipeline(sheetId: string, pipelineId: string): Promise<void> {
     await appendLog({
       action: "generate-reel",
       scenario_id: sheetId,
-      message: `Pipeline complete. Output: ${outputPath}. Cost: $${totalCost.toFixed(4)}`,
+      message: `Pipeline complete. Output: ${reelUrl}. Cost: $${totalCost.toFixed(4)}`,
       cost: totalCost,
     });
 
