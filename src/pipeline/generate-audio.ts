@@ -33,6 +33,10 @@ interface ElevenLabsTimestampResponse {
  */
 let ttsReplacements: [RegExp, string][] = [];
 
+export function setTtsReplacements(replacements: [RegExp, string][]): void {
+  ttsReplacements = replacements;
+}
+
 export async function generateAudio(scenarioId: string, productId?: string): Promise<{
   audioPath: string;
   timestampsPath: string;

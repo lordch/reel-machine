@@ -451,7 +451,8 @@ function buildScenario(
   scenes: z.infer<typeof rawSceneSchema>[],
   targetDuration: number,
 ): Scenario {
-  const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "") + `-${targetDuration}s`;
+  const slug = title.toLowerCase().replace(/\s*\(\d+s\)\s*/g, "").replace(/[^a-z0-9]+/g, "-").replace(/-+$/, "").replace(/^-+/, "");
+  const id = `${slug}-${targetDuration}s`;
 
   const pipelineScenes = scenes.map((scene, i) => {
     const isAvatar = i % 2 === 0;
