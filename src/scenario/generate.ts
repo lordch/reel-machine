@@ -156,8 +156,7 @@ async function generateAndReviewScript(
   const targetWords = getTargetWords(targetDuration);
   const totalUsage: ClaudeUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
 
-  const narrativeSection = loadKnowledgeFile("scenario-prompt.md")
-    .split("## B-Roll Prompting")[0];
+  const scriptGuide = loadKnowledgeFile("script-writing.md");
 
   const existingList = existingScenarios.length > 0
     ? `\n\nThese already exist — create something genuinely different:\n${existingScenarios.map(s => `- "${s.title}" — ${s.hook}`).join("\n")}`
@@ -175,7 +174,7 @@ async function generateAndReviewScript(
   const systemBlocks: Anthropic.Messages.TextBlockParam[] = [
     cachedSystem(`You write and review narration scripts for short-form video ads. Just the spoken text — no scene directions, no visual descriptions, no formatting.
 
-${narrativeSection}
+${scriptGuide}
 
 WORD BUDGET: Each script must be ${targetWords - WORD_TOLERANCE}-${targetWords + WORD_TOLERANCE} words for a ${targetDuration}s ad. Count carefully — TTS will exceed ${targetDuration}s if you write more.
 
@@ -367,26 +366,10 @@ async function splitIntoScenes(
   const model = getModel();
   const totalUsage: ClaudeUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
 
-  const brollGuide = loadKnowledgeFile("scenario-prompt.md")
-    .split("## B-Roll Prompting")[1] || "";
+  const sceneGuide = loadKnowledgeFile("scene-splitting.md");
 
   const systemBlocks: Anthropic.Messages.TextBlockParam[] = [
-    cachedSystem(`You split narration scripts into scenes for video production. The script is already finalized — do NOT change, add, or remove any words.
-
-Scene structure: avatar → broll → avatar → broll → ... → avatar
-- Avatar: short punchy lines (5-10 words)
-- Broll: can be longer (8-15 words), carry the narrative
-- First scene = avatar. Last scene = avatar (CTA).
-- CRITICAL: Joining all scene texts with " " must EXACTLY reproduce the original script. No duplicates, no changes.
-
-B-ROLL VARIETY — for each broll scene, use a DIFFERENT visual approach:
-- Max ONE dashboard/laptop shot per scenario
-- Max ONE phone-in-hand shot per scenario
-- At least half the broll should be atmospheric, metaphorical, or environmental — not screens
-- Never repeat the same visual concept
-
-## B-Roll Prompting Guide
-${brollGuide}
+    cachedSystem(`${sceneGuide}
 
 You MUST use the save_scenes tool to return your work. Do not respond with text — only use the tool.`),
   ];
