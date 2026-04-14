@@ -1,19 +1,9 @@
 reel.darkhelmettechnologies.com {
-	# API
 	handle /api/* {
 		reverse_proxy api:3001
 	}
 
-	# n8n
-	handle /n8n/* {
-		reverse_proxy n8n:5678
-	}
-
-	# n8n webhooks
-	handle /webhook/* {
-		reverse_proxy n8n:5678
-	}
-	handle /webhook-test/* {
+	handle /* {
 		reverse_proxy n8n:5678
 	}
 }

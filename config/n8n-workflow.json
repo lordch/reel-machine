@@ -1,0 +1,272 @@
+{
+  "name": "Reel Machine",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "triggerAtHour": 10, "triggerAtDay": 1 },
+            { "triggerAtHour": 10, "triggerAtDay": 4 }
+          ]
+        }
+      },
+      "id": "c826cc9b-11d3-4c64-a8e5-ff1c6d4ebcbc",
+      "name": "Cron: Mon+Thu 10:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:3001/api/poll-sheets",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer reel-machine-test-secret-2026" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1576b031-2cb1-4b9b-9e30-eadd16796f90",
+      "name": "Poll Sheets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [224, 0]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reel-pipeline",
+        "options": {}
+      },
+      "id": "47964ddf-40c6-44c2-8691-e360c2fe7d78",
+      "name": "Pipeline Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 304],
+      "webhookId": "reel-pipeline"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.body.event }}",
+              "rightValue": "reel_complete",
+              "operator": { "type": "string", "operation": "equals" },
+              "id": "dbd4aa4e-2be6-4244-89d5-588f8bd64627"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f52a3d51-d467-4a6f-b568-06b2336c90eb",
+      "name": "Success?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [448, 304]
+    },
+    {
+      "parameters": {
+        "fromEmail": "onboarding@resend.dev",
+        "toEmail": "={{ $json.body.alertEmail || 'michalchelminski@gmail.com' }}",
+        "subject": "=✅ Reel ready: {{ $json.body.title }}",
+        "html": "=<h2>{{ $json.body.title }}</h2>\n<p>Video: <a href=\"{{ $json.body.reelUrl }}\">Watch reel</a></p>\n<p>Pipeline cost: ${{ $json.body.cost }}</p>\n<br>\n<p>\n  <a href=\"https://reel.darkhelmettechnologies.com/webhook/approve-publish?scenarioId={{ $json.body.scenarioId }}&title={{ $json.body.title }}&reelUrl={{ $json.body.reelUrl }}\"\n     style=\"background:#22c55e;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;font-weight:bold;\">\n    Approve & Publish\n  </a>\n</p>",
+        "options": {}
+      },
+      "id": "da68b3de-381e-4fd6-8880-5c9a39e74fbe",
+      "name": "Email: Reel Ready",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [688, 240],
+      "credentials": {
+        "smtp": { "id": "WWCE836JRhBjPFO4", "name": "SMTP account" }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "onboarding@resend.dev",
+        "toEmail": "={{ $json.body.alertEmail || 'michalchelminski@gmail.com' }}",
+        "subject": "=❌ Reel failed: {{ $json.body.title }}",
+        "html": "=<h2>Pipeline failed: {{ $json.body.title }}</h2>\n<p>Error: {{ $json.body.error }}</p>\n<p>Status reverted to <strong>approved</strong> for retry.</p>",
+        "options": {}
+      },
+      "id": "912d876b-efe6-474c-8a94-ccd5768b9960",
+      "name": "Email: Failed",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [688, 400],
+      "credentials": {
+        "smtp": { "id": "WWCE836JRhBjPFO4", "name": "SMTP account" }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "approve-publish",
+        "options": {}
+      },
+      "id": "f9cb0b35-8f86-4552-a127-f748df075bed",
+      "name": "Approve Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-160, 608],
+      "webhookId": "approve-publish"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:3001/api/update-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer reel-machine-test-secret-2026" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "scenarioId", "value": "={{ $json.query.scenarioId }}" },
+            { "name": "status", "value": "approved_final" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "87b85c5f-dd59-46e0-bcfe-460365725aa9",
+      "name": "Update Sheet: approved_final",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [96, 592]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Approve Webhook').item.json.query.reelUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "ecef16e7-4321-4f84-8448-26342c51cf08",
+      "name": "Download Video from R2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [320, 592]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('Approve Webhook').item.json.query.title }}",
+        "regionCode": "PL",
+        "categoryId": "28",
+        "options": {
+          "privacyStatus": "public",
+          "description": "={{ $('Approve Webhook').item.json.query.title }}\n\n#shorts"
+        }
+      },
+      "id": "1e1761a8-47b6-43d8-ae49-240ee55dfcd3",
+      "name": "YouTube Upload",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [560, 592],
+      "credentials": {
+        "youTubeOAuth2Api": { "id": "LxZSuryv2Q5nO9HC", "name": "YouTube account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://api:3001/api/update-status",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer reel-machine-test-secret-2026" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "scenarioId", "value": "={{ $('Approve Webhook').item.json.query.scenarioId }}" },
+            { "name": "status", "value": "published" },
+            { "name": "publish_urls", "value": "=https://youtube.com/shorts/{{ $('YouTube Upload').item.json.uploadId }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-update-published",
+      "name": "Update Sheet: published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [800, 592]
+    },
+    {
+      "parameters": {
+        "fromEmail": "onboarding@resend.dev",
+        "toEmail": "michalchelminski@gmail.com",
+        "subject": "=🎬 Published: {{ $('Approve Webhook').item.json.query.title }}",
+        "html": "=<h2>{{ $('Approve Webhook').item.json.query.title }}</h2>\n<p>Uploaded to YouTube:</p>\n<p><a href=\"https://youtube.com/shorts/{{ $('YouTube Upload').item.json.uploadId }}\">Watch on YouTube</a></p>",
+        "options": {}
+      },
+      "id": "e5f6g7h8-email-published",
+      "name": "Email: Published",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1040, 592],
+      "credentials": {
+        "smtp": { "id": "WWCE836JRhBjPFO4", "name": "SMTP account" }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron: Mon+Thu 10:00": {
+      "main": [[{ "node": "Poll Sheets", "type": "main", "index": 0 }]]
+    },
+    "Pipeline Webhook": {
+      "main": [[{ "node": "Success?", "type": "main", "index": 0 }]]
+    },
+    "Success?": {
+      "main": [
+        [{ "node": "Email: Reel Ready", "type": "main", "index": 0 }],
+        [{ "node": "Email: Failed", "type": "main", "index": 0 }]
+      ]
+    },
+    "Approve Webhook": {
+      "main": [[{ "node": "Update Sheet: approved_final", "type": "main", "index": 0 }]]
+    },
+    "Update Sheet: approved_final": {
+      "main": [[{ "node": "Download Video from R2", "type": "main", "index": 0 }]]
+    },
+    "Download Video from R2": {
+      "main": [[{ "node": "YouTube Upload", "type": "main", "index": 0 }]]
+    },
+    "YouTube Upload": {
+      "main": [[{ "node": "Update Sheet: published", "type": "main", "index": 0 }]]
+    },
+    "Update Sheet: published": {
+      "main": [[{ "node": "Email: Published", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e2a95e8a26e4a5a75f50969d2292944029fb02329599d86a56a805e9bb9421a4"
+  },
+  "id": "yj9Cr5uHuTvHO0xq",
+  "tags": []
+}

@@ -23,8 +23,7 @@ services:
     environment:
       - N8N_HOST=reel.darkhelmettechnologies.com
       - N8N_PROTOCOL=https
-      - WEBHOOK_URL=https://reel.darkhelmettechnologies.com/n8n/
-      - N8N_PATH=/n8n/
+      - WEBHOOK_URL=https://reel.darkhelmettechnologies.com/
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped
