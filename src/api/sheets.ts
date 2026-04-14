@@ -200,3 +200,42 @@ export async function appendLog(entry: {
     },
   });
 }
+
+// ── Avatars tab ──
+
+export interface AvatarRow {
+  name: string;
+  heygenAvatarId: string;
+  voiceId: string;
+  description: string;
+  active: boolean;
+}
+
+export async function readAvatars(): Promise<AvatarRow[]> {
+  const sheets = getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: spreadsheetId(),
+    range: "Avatars!A1:E100",
+  });
+
+  const rows = res.data.values || [];
+  if (rows.length < 2) return [];
+
+  return rows.slice(1).map((row) => ({
+    name: row[0] || "",
+    heygenAvatarId: row[1] || "",
+    voiceId: row[2] || "",
+    description: row[3] || "",
+    active: (row[4] || "").toLowerCase() === "yes",
+  }));
+}
+
+export function pickNextAvatar(avatars: AvatarRow[], lastUsed: string): AvatarRow {
+  const active = avatars.filter((a) => a.active);
+  if (active.length === 0) throw new Error("No active avatars in Avatars tab");
+  if (active.length === 1) return active[0];
+
+  const lastIndex = active.findIndex((a) => a.name === lastUsed);
+  const nextIndex = (lastIndex + 1) % active.length;
+  return active[nextIndex];
+}

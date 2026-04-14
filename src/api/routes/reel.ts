@@ -1,9 +1,9 @@
 import path from "path";
 import { Router, type Request, type Response } from "express";
-import { readConfig, readScenarios, updateScenarioStatus, appendLog } from "../sheets.js";
+import { readConfig, readScenarios, readAvatars, pickNextAvatar, updateScenarioStatus, appendLog } from "../sheets.js";
 import { authMiddleware } from "../auth.js";
 import { saveScenario } from "../../pipeline/schema.js";
-import { DEFAULTS } from "../../pipeline/config.js";
+import { DEFAULTS, AVATAR_LIBRARY } from "../../pipeline/config.js";
 import { setTtsReplacements } from "../../pipeline/generate-audio.js";
 import { orchestrate } from "../../orchestrate.js";
 import { getCostReport } from "../../pipeline/costs.js";
@@ -66,6 +66,33 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
           return [new RegExp(from, "gi"), to] as [RegExp, string];
         });
       setTtsReplacements(replacements);
+    }
+
+    // Avatar rotation — load from Sheet and pick next
+    const avatars = await readAvatars();
+    if (avatars.length > 0) {
+      // Sync Sheet avatars into pipeline's AVATAR_LIBRARY
+      for (const a of avatars) {
+        AVATAR_LIBRARY[a.name.toLowerCase()] = {
+          heygenAvatarId: a.heygenAvatarId,
+          voiceId: a.voiceId,
+          description: a.description,
+        };
+      }
+      // Find last used avatar from recent scenarios
+      const lastGenerated = scenarios
+        .filter(s => s.status === "ready_for_review" || s.status === "published" || s.status === "approved_final")
+        .pop();
+      let lastUsed = "";
+      try {
+        const lastScenario = lastGenerated ? JSON.parse(lastGenerated.scenes_json) : null;
+        lastUsed = lastScenario?.avatar?.name || "";
+      } catch {}
+      const avatar = pickNextAvatar(avatars, lastUsed);
+      scenarioData.avatar = { name: avatar.name, avatarId: avatar.heygenAvatarId };
+      // Override voice in DEFAULTS for TTS
+      DEFAULTS.avatar = avatar.name;
+      console.log(`  Avatar: ${avatar.name} (${avatar.description})`);
     }
 
     // Save scenario.json to disk (pipeline expects it there)
