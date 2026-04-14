@@ -196,20 +196,23 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string): 
 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    const stack = err instanceof Error ? err.stack?.split("\n").slice(0, 3).join(" | ") : "";
     console.error(`✗ Pipeline failed for "${pipelineId}": ${message}`);
+    if (stack) console.error(`  Stack: ${stack}`);
 
+    const errorForSheet = `[${new Date().toISOString()}] ${message}`.substring(0, 1000);
     await updateScenarioStatus(sheetId, {
       status: "approved",
-      error: message.substring(0, 500),
+      error: errorForSheet,
     }).catch(() => {});
 
     await appendLog({
       action: "error",
       scenario_id: sheetId,
-      message: `Pipeline failed: ${message.substring(0, 500)}`,
+      message: `Pipeline failed: ${message.substring(0, 1000)}`,
     }).catch(() => {});
 
-    await notifyN8n("reel_failed", { scenarioId: sheetId, pipelineId, title, error: message.substring(0, 200) });
+    await notifyN8n("reel_failed", { scenarioId: sheetId, pipelineId, title, error: message.substring(0, 500) });
 
   } finally {
     generating = false;

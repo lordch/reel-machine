@@ -49,7 +49,8 @@ async function heygenFetch(endpoint: string, opts: RequestInit = {}): Promise<an
 
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`HeyGen API error ${res.status}: ${body}`);
+    const isBilling = res.status === 402 || body.includes("insufficient") || body.includes("credit") || body.includes("quota") || body.includes("balance");
+    throw new Error(`HeyGen API error ${res.status}: ${body.substring(0, 300)}${isBilling ? " — CHECK ACCOUNT BALANCE / CREDITS" : ""}`);
   }
 
   return res.json();

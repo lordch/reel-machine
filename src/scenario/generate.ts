@@ -110,6 +110,33 @@ function extractUsage(response: Anthropic.Messages.Message): ClaudeUsage {
   };
 }
 
+async function callWithRetry(
+  client: Anthropic,
+  params: Anthropic.Messages.MessageCreateParamsNonStreaming,
+  label: string,
+  maxRetries = 2,
+): Promise<Anthropic.Messages.Message> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await client.messages.create(params) as Anthropic.Messages.Message;
+    } catch (err: any) {
+      const status = err.status || err.statusCode || "";
+      const message = err.message || String(err);
+      const isRetryable = !status || status >= 500 || status === 429 || message.includes("fetch failed") || message.includes("ECONNRESET");
+
+      if (isRetryable && attempt < maxRetries) {
+        const delay = Math.min(2 ** (attempt + 1), 15);
+        console.warn(`  ⚠ ${label} failed (${status || "network"}): ${message.substring(0, 100)}. Retry ${attempt + 1}/${maxRetries} in ${delay}s...`);
+        await new Promise(r => setTimeout(r, delay * 1000));
+        continue;
+      }
+
+      throw new Error(`${label}: ${status ? `HTTP ${status} — ` : ""}${message}`);
+    }
+  }
+  throw new Error(`${label}: exhausted retries`);
+}
+
 function getToolBlock(response: Anthropic.Messages.Message, toolName: string): Anthropic.Messages.ToolUseBlock | undefined {
   return response.content.find(
     (b): b is Anthropic.Messages.ToolUseBlock => b.type === "tool_use" && b.name === toolName
@@ -207,14 +234,14 @@ ${config.brand_voice}${batchPrompt}${existingList}${previousScriptsList}`,
   // ── Turn 1: Generate script ──
   console.log(`Step 1: Generating script (target: ${targetWords} words, thinking: ${THINKING_BUDGET})...`);
 
-  const resp1 = await client.messages.create({
+  const resp1 = await callWithRetry(client, {
     model,
     max_tokens: THINKING_BUDGET + 2000,
     thinking: { type: "enabled", budget_tokens: THINKING_BUDGET },
     system: systemBlocks,
     tools: [scriptToolDef],
     messages,
-  });
+  }, "Step 1: generate script");
 
   const usage1 = extractUsage(resp1);
   addUsage(totalUsage, usage1);
@@ -248,14 +275,14 @@ ${config.brand_voice}${batchPrompt}${existingList}${previousScriptsList}`,
     { role: "user", content: `Now review the script you just wrote. Check:\n${reviewChecks.map((c, i) => `${i + 1}. ${c}`).join("\n")}\n\nIf anything needs fixing, fix it and return the corrected version via save_script. If it's perfect, return it unchanged via save_script.` },
   );
 
-  const resp2 = await client.messages.create({
+  const resp2 = await callWithRetry(client, {
     model,
     max_tokens: THINKING_BUDGET + 2000,
     thinking: { type: "enabled", budget_tokens: THINKING_BUDGET },
     system: systemBlocks,
     tools: [scriptToolDef],
     messages,
-  });
+  }, "Step 2: review script");
 
   const usage2 = extractUsage(resp2);
   addUsage(totalUsage, usage2);
@@ -384,7 +411,7 @@ You MUST use the save_scenes tool to return your work. Do not respond with text 
 
     console.log(`Step 3${attempt > 0 ? ` (retry ${attempt})` : ""}: Splitting into ${sceneCount} scenes (thinking: ${THINKING_BUDGET})...`);
 
-    const response = await client.messages.create({
+    const response = await callWithRetry(client, {
       model,
       max_tokens: THINKING_BUDGET + 8000,
       thinking: { type: "enabled", budget_tokens: THINKING_BUDGET },
@@ -407,7 +434,7 @@ Rules:
 For visual diversity, here are b-roll prompts from recent scenarios. Try to bring fresh visual ideas — different shot types, locations, moods, and approaches:
 ${previousBrollPrompts.map(p => `- "${p.substring(0, 120)}..."`).join("\n")}` : ""}`,
       }],
-    });
+    }, "Step 3: split into scenes");
 
     const usage = extractUsage(response);
     addUsage(totalUsage, usage);

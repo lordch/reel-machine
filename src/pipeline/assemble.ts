@@ -13,8 +13,17 @@
 import "dotenv/config";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execSync, type ExecSyncOptions } from "child_process";
 import { loadScenario, loadTimestamps, alignScenesToAudio, scenarioDir, type NarrationTimestamps } from "./schema.js";
+
+function runCommand(cmd: string, label: string, opts: ExecSyncOptions = { stdio: "pipe" }): void {
+  try {
+    execSync(cmd, opts);
+  } catch (err: any) {
+    const stderr = err.stderr?.toString()?.slice(-500) || "";
+    throw new Error(`${label} failed: ${err.message}${stderr ? `\nffmpeg output: ${stderr}` : ""}`);
+  }
+}
 import { productAssetsDir } from "./product.js";
 import type { CaptionSegment, ClipInfo, ReelProps } from "../types.js";
 
@@ -213,32 +222,32 @@ export async function assemble(scenarioId: string, shouldRender = false, product
 
     if (!fs.existsSync(sourceFile)) {
       console.warn(`  ⚠ ${sourceFile} not found → placeholder`);
-      execSync(
+      runCommand(
         `ffmpeg -y -f lavfi -i color=c=black:s=1080x1920:d=${clipDuration.toFixed(2)} ` +
         `-an -c:v libx264 -preset ultrafast "${destPath}"`,
-        { stdio: "pipe" },
+        `placeholder for ${scene.id}`,
       );
     } else if (scene.visual === "avatar") {
-      execSync(
+      runCommand(
         `ffmpeg -y -i "${sourceFile}" -an ` +
         `-t ${clipDuration.toFixed(3)} -c:v libx264 -preset fast -crf 23 "${destPath}"`,
-        { stdio: "pipe" },
+        `encode avatar ${scene.id}`,
       );
     } else if (scene.visual === "broll") {
-      execSync(
+      runCommand(
         `ffmpeg -y -i "${sourceFile}" -an ` +
         `-t ${clipDuration.toFixed(3)} ` +
         `-vf "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920" ` +
         `-c:v libx264 -preset fast -crf 23 "${destPath}"`,
-        { stdio: "pipe" },
+        `encode broll ${scene.id}`,
       );
     } else {
-      execSync(
+      runCommand(
         `ffmpeg -y -loop 1 -i "${sourceFile}" -an ` +
         `-t ${clipDuration.toFixed(3)} ` +
         `-vf "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920" ` +
         `-c:v libx264 -preset fast -crf 23 "${destPath}"`,
-        { stdio: "pipe" },
+        `encode screenshot ${scene.id}`,
       );
     }
 
@@ -318,8 +327,9 @@ export const generatedReelProps: ReelProps & { narrationSrc: string; musicSrc?: 
     const outputPath = path.join(dir, "output", "reel.mp4");
     fs.mkdirSync(path.join(dir, "output"), { recursive: true });
     console.log(`\nRendering → ${outputPath}`);
-    execSync(
+    runCommand(
       `npx remotion render src/index.ts GeneratedReel "${outputPath}"`,
+      "Remotion render",
       { stdio: "inherit", cwd: process.cwd() },
     );
     console.log(`Done: ${outputPath}`);

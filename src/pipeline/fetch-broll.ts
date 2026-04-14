@@ -70,8 +70,12 @@ async function generateAiVideo(prompt: string, outputPath: string, duration: num
       },
     });
   } catch (err: any) {
-    const detail = err.body ?? err.message ?? String(err);
-    throw new Error(`fal.ai [${DEFAULTS.brollModel}] error: ${typeof detail === "object" ? JSON.stringify(detail) : detail}`);
+    const status = err.status || err.statusCode || "";
+    const body = err.body ? (typeof err.body === "object" ? JSON.stringify(err.body) : err.body) : "";
+    const message = err.message || String(err);
+    const detail = body || message;
+    const isBilling = detail.includes("insufficient") || detail.includes("quota") || detail.includes("balance") || detail.includes("payment");
+    throw new Error(`fal.ai [${DEFAULTS.brollModel}]${status ? ` HTTP ${status}` : ""}: ${detail.substring(0, 300)}${isBilling ? " — CHECK ACCOUNT BALANCE" : ""}`);
   }
 
   const videoUrl = result.data?.video?.url || result.video?.url;
