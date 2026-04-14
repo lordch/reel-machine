@@ -67,9 +67,9 @@ Concrete over abstract — specific numbers, specific actions, specific outcomes
 
   // ── VIDEO SETTINGS ──
   ["## VIDEO SETTINGS", ""],
-  ["avatar", "skyler"],
   ["caption_style", "bold-pop"],
-  ["broll_model", "ltx-2"],
+  ["broll_model", "veo-3.1-lite"],
+  ["tts_replacements", "Go2EV → go to EV\ngo2ev.com → go to e v dot com"],
 
   // ── GENERATION ──
   ["## GENERATION", ""],
@@ -90,6 +90,21 @@ const SCENARIO_HEADERS = [
 
 const LOG_HEADERS = ["timestamp", "action", "scenario_id", "message", "cost"];
 
+const AVATAR_ROWS = [
+  ["Name", "HeyGen Avatar ID", "Voice ID", "Description", "Active"],
+  ["skyler", "69ae797df8f44394a8c770464902a5d2", "FLj50PrMa40MhGHappOt", "Skyler — young woman", "yes"],
+  ["zenon", "e870559250824765baf179c19cb64469", "uju3wxzG5OhpWcoi3SMy", "Zenon — 40s man", "yes"],
+];
+
+const MODEL_ROWS = [
+  ["Model ID", "Cost/sec", "Min", "Max", "Resolution", "Status", "Description"],
+  ["veo-3.1-lite", "$0.030", "4s", "8s", "720p", "untested", "Veo 3.1 Lite 720p no audio — BEST VALUE"],
+  ["ltx-2.3-fast", "$0.040", "6s", "20s", "1080p", "untested", "LTX 2.3 Fast — cheapest 1080p"],
+  ["hailuo-02-std", "$0.045", "6s", "10s", "768p", "tested", "Hailuo-02 Std — fixed 6/10s"],
+  ["kling-3.0-std", "$0.084", "3s", "15s", "1080p", "tested", "Kling 3.0 Std no audio — proven"],
+  ["veo-3.1-lite-1080", "$0.050", "4s", "8s", "1080p", "untested", "Veo 3.1 Lite 1080p no audio"],
+];
+
 async function main() {
   const auth = new google.auth.GoogleAuth({
     keyFile: KEY_FILE,
@@ -104,7 +119,7 @@ async function main() {
   console.log("Existing tabs:", existingTabs);
 
   // 2. Create missing tabs
-  const requiredTabs = ["Config", "Scenarios", "Log"];
+  const requiredTabs = ["Config", "Scenarios", "Log", "Avatars", "Models"];
   const requests: any[] = [];
 
   for (const tab of requiredTabs) {
@@ -193,8 +208,22 @@ async function main() {
     });
   }
 
+  // 7. Write Avatars + Models
+  await sheets.spreadsheets.values.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      valueInputOption: "RAW",
+      data: [
+        { range: `Avatars!A1:E${AVATAR_ROWS.length}`, values: AVATAR_ROWS },
+        { range: `Models!A1:G${MODEL_ROWS.length}`, values: MODEL_ROWS },
+      ],
+    },
+  });
+
   console.log(`✓ Config tab: ${CONFIG_ROWS.length} rows (vertical key-value)`);
   console.log("✓ Scenarios + Log headers written");
+  console.log(`✓ Avatars: ${AVATAR_ROWS.length - 1} avatars`);
+  console.log(`✓ Models: ${MODEL_ROWS.length - 1} b-roll models`);
   console.log(`\nSheet: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
 }
 
