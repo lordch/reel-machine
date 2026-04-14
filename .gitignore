@@ -18,3 +18,5 @@ public/generated/
 public/shared-music.mp3
 public/*.svg
 public/*.png
+
+.claude/
