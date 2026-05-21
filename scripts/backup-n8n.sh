@@ -28,6 +28,8 @@ SIZE_MB=$(du -m "$TARBALL" | cut -f1)
 echo "[$(date)] Tarball size: ${SIZE_MB} MB"
 
 echo "[$(date)] Uploading to R2 as ${REMOTE_KEY}..."
+# Copy upload script into container (may not be in the image yet — only built-in after redeploy)
+docker cp /opt/reel-machine/scripts/backup-upload.ts reel-machine-api-1:/app/scripts/backup-upload.ts
 docker cp "$TARBALL" reel-machine-api-1:"$TARBALL"
 docker exec reel-machine-api-1 npx tsx scripts/backup-upload.ts "$TARBALL" "$REMOTE_KEY"
 docker exec reel-machine-api-1 rm -f "$TARBALL"
