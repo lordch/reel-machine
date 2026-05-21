@@ -5,6 +5,37 @@
 Autonomous pipeline for generating short-form vertical video ads (9:16, 1080x1920, 30fps).
 One Google Sheet = one product. Configure product knowledge, approve scenarios, get published reels.
 
+## Working with Me (Michał)
+
+**Domyślny tryb pracy = rozmowa.** Michał zadaje dużo pytań, lubi przedyskutowywać, brainstormować, odbijać pomysły. Z rozmowy może wyniknąć decyzja o zmianie, ale często wynika tylko zrozumienie. **Nie zakładaj że pytanie = prośba o akcję.** Jeśli Michał pisze "powiedz mi co o tym sądzisz" / "jak myślisz?" — odpowiadasz tekstem, nie tool callami.
+
+**Three-stage methodology** (gdy faktycznie idziemy w stronę zmiany):
+1. **Dyskusja** — alignment, założenia, odbijanie pomysłów
+2. **Propozycja** — konkretny plan opisany w czacie, jeszcze nie wykonany
+3. **Implementacja** — dopiero po jawnej zgodzie
+
+*Why:* wcześniej w tym projekcie Michał wielokrotnie powiedział "powiedz mi jak myślisz" i dostał zamiast tego edytowane pliki. To psuje zaufanie i traci kontekst, który nie był jeszcze gotowy do zapisania.
+
+**Hard rules** (twarde brzegi):
+- **Nie odpalaj płatnych API** (Anthropic, ElevenLabs, HeyGen, fal.ai) bez zgody. Każdy call kosztuje realne $; testy generowania video to ~$1+. Free operations (Google Sheets read, health checks, file ops) bez pytania
+- **Nie modyfikuj wartości w Google Sheecie** ustawionych przez Michała bez pytania. Historyczny incydent: zmieniłem batch_size z 1 na 5 "żeby było szybciej" — Michał celowo trzymał 1 do oszczędzania tokenów
+- **Nie edytuj plików w `context/` bez aprobaty per plik.** Kontekst rozlewa się szybko gdy AI ma swobodę pisania o sobie i o projekcie; kontrola Michała jest kluczowa dla utrzymania porządku i weryfikowalności
+- **Komunikacja po polsku**
+
+**Diagnose before recommending:** zanim zaproponujesz fix wymagający ode mnie roboty (reset czegoś, instalacja, zmiana configa, ssh-add), uruchom **falsifiable test** który potwierdza diagnozę. *Why:* w maju 2026 zdiagnozowałem brak autoryzacji klucza SSH na VPS-ie i poleciłem reset hasła roota przez Hetzner web console (~30 min roboty). Faktyczna przyczyna: passphrase-encrypted klucz lokalnie, agent pusty, fix = `ssh-add` (15 sekund). Sygnałem był pushback Michała "może źle szukamy?" — bez tego pchnąłbym go w niepotrzebne kroki.
+
+**Push back to sygnał, nie grzeczność.** Gdy Michał pyta "czy nie wydaje ci się dziwne?" / "może coś źle robimy?" / "może brakuje ci kontekstu?" — **nie broń hipotezy, rozszerz śledztwo**. To są pytania diagnostyczne, nie konwersacyjne.
+
+## Context Files
+
+Po dodatkowy kontekst zaglądaj do:
+- [`context/PRODUCT.md`](context/PRODUCT.md) — biznesowy: kto, co, czemu (rzadko się zmienia)
+- [`context/STATE.md`](context/STATE.md) — aktualny snapshot stanu projektu. **Best-effort, może się rozjeżdżać z rzeczywistością.** Operacyjne fakty (czy API żyje, czy cron leci) weryfikuj komendą, nie ufaj plikowi na ślepo
+- [`context/history.md`](context/history.md) — chronologiczny log decyzji i nieoczywistych ustaleń z odnośnikami do sesji
+- [`context/notes/`](context/notes/) — luźne notatki Michała. **Nie edytuj bez wyraźnej prośby.**
+
+SessionStart hook automatycznie wstrzykuje STATE.md i ogon history.md przy każdym starcie — masz to top of mind bez ręcznego czytania.
+
 ## Architecture
 
 ```
