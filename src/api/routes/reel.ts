@@ -3,7 +3,8 @@ import { Router, type Request, type Response } from "express";
 import { readConfig, readScenarios, readAvatars, pickNextAvatar, updateScenarioStatus, appendLog } from "../sheets.js";
 import { authMiddleware } from "../auth.js";
 import { saveScenario } from "../../pipeline/schema.js";
-import { DEFAULTS, AVATAR_LIBRARY } from "../../pipeline/config.js";
+import { DEFAULTS, AVATAR_LIBRARY, BROLL_MODEL_LIBRARY } from "../../pipeline/config.js";
+import { CaptionStyleSchema } from "../../pipeline/schema.js";
 import { setTtsReplacements } from "../../pipeline/generate-audio.js";
 import { orchestrate } from "../../orchestrate.js";
 import { getCostReport } from "../../pipeline/costs.js";
@@ -50,9 +51,27 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
       website: config.website,
     };
 
-    // Apply broll model from Sheet config
+    // Apply broll model from Sheet config (validated against BROLL_MODEL_LIBRARY)
     if (config.broll_model) {
+      if (!BROLL_MODEL_LIBRARY[config.broll_model]) {
+        res.status(400).json({
+          error: `Unknown broll_model "${config.broll_model}". Available: ${Object.keys(BROLL_MODEL_LIBRARY).join(", ")}`,
+        });
+        return;
+      }
       DEFAULTS.brollModel = config.broll_model;
+    }
+
+    // Apply caption style from Sheet config (validated against CaptionStyleSchema enum)
+    if (config.caption_style) {
+      const parsed = CaptionStyleSchema.safeParse(config.caption_style);
+      if (!parsed.success) {
+        res.status(400).json({
+          error: `Unknown caption_style "${config.caption_style}". Available: ${CaptionStyleSchema.options.join(", ")}`,
+        });
+        return;
+      }
+      (DEFAULTS as { captionStyle: string }).captionStyle = parsed.data;
     }
 
     // Apply avatar version from Sheet config
@@ -112,7 +131,7 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
     res.json({ status: "generating", scenarioId });
 
     // Run pipeline in background
-    runPipeline(scenarioId, scenarioData.id, scenario.title).catch(() => {});
+    runPipeline(scenarioId, scenarioData.id, scenario.title, config.alert_email || "").catch(() => {});
 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
@@ -140,7 +159,7 @@ router.post("/update-status", authMiddleware, async (req: Request, res: Response
   }
 });
 
-async function runPipeline(sheetId: string, pipelineId: string, title: string): Promise<void> {
+async function runPipeline(sheetId: string, pipelineId: string, title: string, alertEmail: string): Promise<void> {
   try {
     console.log(`\nStarting pipeline for "${pipelineId}" (sheet row: ${sheetId})...`);
 
@@ -197,7 +216,7 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string): 
     console.log(`✓ Pipeline complete for "${pipelineId}"`);
 
     // Notify n8n
-    await notifyN8n("reel_complete", { scenarioId: sheetId, pipelineId, title, reelUrl, cost: totalCost });
+    await notifyN8n("reel_complete", { scenarioId: sheetId, pipelineId, title, reelUrl, cost: totalCost, alertEmail });
 
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
@@ -217,7 +236,7 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string): 
       message: `Pipeline failed: ${message.substring(0, 1000)}`,
     }).catch(() => {});
 
-    await notifyN8n("reel_failed", { scenarioId: sheetId, pipelineId, title, error: message.substring(0, 500) });
+    await notifyN8n("reel_failed", { scenarioId: sheetId, pipelineId, title, error: message.substring(0, 500), alertEmail });
 
   } finally {
     generating = false;

@@ -66,6 +66,7 @@ Concrete over abstract — specific numbers, specific actions, specific outcomes
   ["## GENERATION", ""],
   ["batch_size", "5"],
   ["batch_prompt", ""],
+  ["target_duration", "30"],
 
   // ── NOTIFICATIONS ──
   ["## NOTIFICATIONS", ""],

@@ -40,6 +40,7 @@ export interface SheetConfig {
   // Generation
   batch_size: number;
   batch_prompt: string;
+  target_duration: number;
   // Notifications
   alert_email: string;
 }
@@ -62,6 +63,7 @@ export async function readConfig(): Promise<SheetConfig> {
   return {
     ...config,
     batch_size: parseInt(config.batch_size, 10) || 20,
+    target_duration: parseInt(config.target_duration, 10) || 30,
   } as unknown as SheetConfig;
 }
 

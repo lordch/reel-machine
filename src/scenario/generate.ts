@@ -517,7 +517,7 @@ export async function generateScenarios(
   previousBrollPrompts: string[] = [],
   previousScripts: string[] = [],
 ): Promise<GenerationResult> {
-  const targetDuration = 30;
+  const targetDuration = config.target_duration || 30;
   const sceneCount = getSceneCount(targetDuration);
   const model = getModel();
   const totalUsage: ClaudeUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
