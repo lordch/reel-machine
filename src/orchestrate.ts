@@ -1,7 +1,7 @@
 /**
  * Orchestrate full pipeline: audio → split → avatar+broll+music (parallel) → assemble+render.
  *
- * Usage: npx tsx src/orchestrate.ts <scenario-id> [--product=<id>] [--no-render]
+ * Usage: npx tsx src/orchestrate.ts <scenario-id> [--no-render]
  *
  * All steps have automatic retry with exponential backoff.
  */
@@ -17,16 +17,15 @@ import { generateMusic } from "./pipeline/generate-music.js";
 import { assemble } from "./pipeline/assemble.js";
 import { printCostSummary } from "./pipeline/costs.js";
 
-export async function orchestrate(scenarioId: string, productId?: string, shouldRender = true): Promise<string> {
+export async function orchestrate(scenarioId: string, shouldRender = true): Promise<string> {
   const startTime = Date.now();
   console.log(`\n${"═".repeat(60)}`);
   console.log(`  Reel Machine — Orchestrating: ${scenarioId}`);
-  if (productId) console.log(`  Product: ${productId}`);
   console.log(`${"═".repeat(60)}\n`);
 
   // 1. Generate narration audio
   console.log("\n── Step 1/6: Generate Audio ──\n");
-  await withRetry(() => generateAudio(scenarioId, productId), 3, "audio");
+  await withRetry(() => generateAudio(scenarioId), 3, "audio");
 
   // 2. Split into avatar segments
   console.log("\n── Step 2/6: Split Avatar Audio ──\n");
@@ -47,7 +46,7 @@ export async function orchestrate(scenarioId: string, productId?: string, should
 
   // 4. Assemble + render
   console.log("\n── Step 6/6: Assemble" + (shouldRender ? " + Render" : "") + " ──\n");
-  await withRetry(() => assemble(scenarioId, shouldRender, productId), 2, "assemble");
+  await withRetry(() => assemble(scenarioId, shouldRender), 2, "assemble");
 
   // Summary
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(0);
@@ -64,16 +63,14 @@ export async function orchestrate(scenarioId: string, productId?: string, should
 const isCLI = process.argv[1]?.includes("orchestrate");
 if (isCLI) {
   const scenarioId = process.argv[2];
-  const productFlag = process.argv.find(a => a.startsWith("--product="));
-  const productId = productFlag?.split("=")[1];
   const noRender = process.argv.includes("--no-render");
 
   if (!scenarioId) {
-    console.error("Usage: npx tsx src/orchestrate.ts <scenario-id> [--product=<id>] [--no-render]");
+    console.error("Usage: npx tsx src/orchestrate.ts <scenario-id> [--no-render]");
     process.exit(1);
   }
 
-  orchestrate(scenarioId, productId, !noRender)
+  orchestrate(scenarioId, !noRender)
     .then((outputPath) => {
       console.log(`Output: ${outputPath}`);
     })

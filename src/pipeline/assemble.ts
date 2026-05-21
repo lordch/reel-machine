@@ -1,7 +1,7 @@
 /**
  * Assemble all generated assets into a Remotion composition and render.
  *
- * Usage: npx tsx src/pipeline/assemble.ts <scenario-id> [--render] [--product=<id>]
+ * Usage: npx tsx src/pipeline/assemble.ts <scenario-id> [--render]
  *
  * Key behavior:
  * - Video duration = audio duration (not scenario targetDuration)
@@ -24,7 +24,6 @@ function runCommand(cmd: string, label: string, opts: ExecSyncOptions = { stdio:
     throw new Error(`${label} failed: ${err.message}${stderr ? `\nffmpeg output: ${stderr}` : ""}`);
   }
 }
-import { productAssetsDir } from "./product.js";
 import type { CaptionSegment, ClipInfo, ReelProps } from "../types.js";
 
 const FPS = 30;
@@ -128,7 +127,7 @@ function buildWordCaptions(timestamps: NarrationTimestamps): CaptionSegment[] {
   return captions;
 }
 
-export async function assemble(scenarioId: string, shouldRender = false, productId?: string): Promise<void> {
+export async function assemble(scenarioId: string, shouldRender = false): Promise<void> {
   const scenario = loadScenario(scenarioId);
   const timestamps = loadTimestamps(scenarioId);
   const dir = scenarioDir(scenarioId);
@@ -148,17 +147,6 @@ export async function assemble(scenarioId: string, shouldRender = false, product
     }
   }
   fs.mkdirSync(PUBLIC_DIR, { recursive: true });
-
-  // Copy logo to public/ (Remotion's staticFile root) if product specified
-  if (productId) {
-    const assetsDir = productAssetsDir(productId);
-    const logoSrc = path.join(assetsDir, scenario.branding.logo);
-    const publicRoot = path.join(process.cwd(), "public");
-    if (fs.existsSync(logoSrc)) {
-      fs.copyFileSync(logoSrc, path.join(publicRoot, scenario.branding.logo));
-      console.log(`  Logo copied: ${scenario.branding.logo} → public/`);
-    }
-  }
 
   // ── 1. Align scenes to actual audio ──
   const aligned = alignScenesToAudio(scenario.scenes, timestamps);
@@ -210,11 +198,9 @@ export async function assemble(scenarioId: string, shouldRender = false, product
       destFile = `gen-broll-${brollIndex}.mp4`;
       brollIndex++;
     } else {
-      // Screenshot — resolve from product assets dir
+      // Screenshot — resolve from repo assets dir
       const assetName = scene.screenshotAsset || "placeholder.png";
-      sourceFile = productId
-        ? path.join(productAssetsDir(productId), assetName)
-        : path.join(process.cwd(), "assets", assetName);
+      sourceFile = path.join(process.cwd(), "assets", assetName);
       destFile = `gen-screenshot-${assetName}`;
     }
 
@@ -344,15 +330,13 @@ const __isMain = process.argv[1]?.includes("assemble");
 if (__isMain) {
   const scenarioId = process.argv[2];
   const shouldRender = process.argv.includes("--render");
-  const productFlag = process.argv.find(a => a.startsWith("--product="));
-  const productId = productFlag?.split("=")[1];
 
   if (!scenarioId) {
-    console.error("Usage: npx tsx src/pipeline/assemble.ts <scenario-id> [--render] [--product=<id>]");
+    console.error("Usage: npx tsx src/pipeline/assemble.ts <scenario-id> [--render]");
     process.exit(1);
   }
 
-  assemble(scenarioId, shouldRender, productId)
+  assemble(scenarioId, shouldRender)
     .catch((err) => {
       console.error("Error:", err.message);
       process.exit(1);

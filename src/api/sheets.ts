@@ -31,11 +31,8 @@ export interface SheetConfig {
   target_audience: string;
   pain_points: string;
   key_messages: string;
-  competitors_diff: string;
   brand_voice: string;
-  language: string;
   // Video settings
-  avatar: string;
   caption_style: string;
   broll_model: string;
   avatar_version: string;
@@ -45,7 +42,6 @@ export interface SheetConfig {
   batch_prompt: string;
   // Notifications
   alert_email: string;
-  alert_slack_webhook: string;
 }
 
 export async function readConfig(): Promise<SheetConfig> {

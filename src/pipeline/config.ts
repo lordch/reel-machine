@@ -3,8 +3,6 @@
  *
  * Avatar library maps human-readable names to HeyGen avatar + ElevenLabs voice IDs.
  * Pipeline scripts resolve avatar by name — voice is hardwired to the avatar.
- *
- * Product-specific config (branding, TTS rules) lives in products/{id}/product.json.
  */
 
 // ── Avatar library ──

@@ -48,13 +48,6 @@ Go2EV doesn't manufacture chargers. It sits on top of existing hardware and make
 • "Works with what you have" — vendor-agnostic, no hardware lock-in
 • "5 minutes to connect" — fast onboarding, no complex integration`],
 
-  ["competitors_diff", `What makes Go2EV different:
-• Vendor-agnostic — competitors are usually tied to one hardware brand. Go2EV works with ANY charger.
-• AI-powered predictions — not just monitoring (what happened) but predictions (what's about to happen)
-• Built for non-technical operators — hotel managers, parking operators, not just EV specialists
-• Fast time to value — connect chargers in minutes, not weeks of integration work
-• Affordable at any scale — pricing that works for 10 chargers or 1000`],
-
   ["brand_voice", `Professional but energetic. Data-driven but human. Peer-to-peer, like a fellow business owner sharing a solution — not a vendor pitching a product.
 
 Confident without being arrogant. Empathetic — we understand the pain because we've seen it.
@@ -62,8 +55,6 @@ Confident without being arrogant. Empathetic — we understand the pain because 
 Language level: accessible to a hotel manager who is not technical. No jargon unless it's industry-standard (like "CPO" or "uptime").
 
 Concrete over abstract — specific numbers, specific actions, specific outcomes. "Shows success rate for every station" not "provides comprehensive analytics".`],
-
-  ["language", "en"],
 
   // ── VIDEO SETTINGS ──
   ["## VIDEO SETTINGS", ""],
@@ -79,7 +70,6 @@ Concrete over abstract — specific numbers, specific actions, specific outcomes
   // ── NOTIFICATIONS ──
   ["## NOTIFICATIONS", ""],
   ["alert_email", ""],
-  ["alert_slack_webhook", ""],
 ];
 
 const SCENARIO_HEADERS = [

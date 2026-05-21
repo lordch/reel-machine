@@ -1,7 +1,7 @@
 /**
  * Generate narration audio from ElevenLabs with word-level timestamps.
  *
- * Usage: npx tsx src/pipeline/generate-audio.ts <scenario-id> [--product=<id>]
+ * Usage: npx tsx src/pipeline/generate-audio.ts <scenario-id>
  *
  * Reads: scenarios/{id}/scenario.json
  * Writes: scenarios/{id}/audio/narration.mp3
@@ -14,7 +14,6 @@ import path from "path";
 import { loadScenario, resolveAvatarFromScenario, scenarioDir, type NarrationTimestamps } from "./schema.js";
 import { PRICING } from "./config.js";
 import { addCost } from "./costs.js";
-import { getTtsReplacements } from "./product.js";
 
 const API_KEY = process.env.ELEVENLABS_API_KEY;
 
@@ -28,8 +27,7 @@ interface ElevenLabsTimestampResponse {
 }
 
 /**
- * Product-specific TTS replacements loaded at call time.
- * Falls back to empty array if no product specified.
+ * TTS replacements set by API from Sheet config (Config.tts_replacements).
  */
 let ttsReplacements: [RegExp, string][] = [];
 
@@ -37,18 +35,13 @@ export function setTtsReplacements(replacements: [RegExp, string][]): void {
   ttsReplacements = replacements;
 }
 
-export async function generateAudio(scenarioId: string, productId?: string): Promise<{
+export async function generateAudio(scenarioId: string): Promise<{
   audioPath: string;
   timestampsPath: string;
   duration: number;
 }> {
   if (!API_KEY) {
     throw new Error("ELEVENLABS_API_KEY not set in environment");
-  }
-
-  // Load product-specific TTS replacements
-  if (productId) {
-    ttsReplacements = getTtsReplacements(productId);
   }
 
   const scenario = loadScenario(scenarioId);
@@ -205,15 +198,13 @@ function charactersToWords(alignment: ElevenLabsTimestampResponse["alignment"]):
 const __isMain = process.argv[1]?.includes("generate-audio");
 if (__isMain) {
   const scenarioId = process.argv[2];
-  const productFlag = process.argv.find(a => a.startsWith("--product="));
-  const productId = productFlag?.split("=")[1];
 
   if (!scenarioId) {
-    console.error("Usage: npx tsx src/pipeline/generate-audio.ts <scenario-id> [--product=<id>]");
+    console.error("Usage: npx tsx src/pipeline/generate-audio.ts <scenario-id>");
     process.exit(1);
   }
 
-  generateAudio(scenarioId, productId)
+  generateAudio(scenarioId)
     .then(({ duration }) => {
       console.log(`\nDone! Narration duration: ${duration.toFixed(1)}s`);
     })
