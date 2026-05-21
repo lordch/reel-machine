@@ -105,17 +105,23 @@ async function createAvatarVideo(audioAssetId: string, avatar: ReelScenario["ava
 
   let data: any;
 
-  if (version === "IV") {
-    // Avatar IV — dedicated endpoint, simpler payload
+  if (version === "IV" || version === "V") {
+    // Avatar IV/V — v3 API endpoint.
+    // aspect_ratio + resolution are real v3 fields; dimension/orientation are ignored.
+    // fit: "contain" preferred over default "cover" so a non-9:16 native render
+    // gives us black bars (visible bug) instead of silent center-crop zoom into the torso.
     const body: Record<string, any> = {
+      type: "avatar",
       avatar_id: resolvedAvatarId,
-      voice: {
-        type: "audio",
-        audio_asset_id: audioAssetId,
-      },
-      dimension: { width: 1080, height: 1920 },
+      audio_asset_id: audioAssetId,
+      aspect_ratio: "9:16",
+      resolution: "1080p",
+      fit: "contain",
     };
-    const res = await heygenFetch("/v2/video/av4/generate", {
+    if (version === "V") {
+      body.engine = { type: "avatar_v" };
+    }
+    const res = await heygenFetch("/v3/videos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -251,7 +257,10 @@ export async function generateAvatar(scenarioId: string, avatarIdOverride?: stri
     } catch { /* skip */ }
   }
 
-  const pricePerSec = DEFAULTS.avatarVersion === "IV" ? PRICING.heygenAvatarIVPerSec : PRICING.heygenAvatarIIIPerSec;
+  const pricePerSec =
+    DEFAULTS.avatarVersion === "V" ? PRICING.heygenAvatarVPerSec
+    : DEFAULTS.avatarVersion === "IV" ? PRICING.heygenAvatarIVPerSec
+    : PRICING.heygenAvatarIIIPerSec;
   const cost = totalSec * pricePerSec;
   addCost(scenarioId, { step: "avatar", provider: "heygen", detail: `${outputFiles.length} clips, ${totalSec.toFixed(1)}s total, Avatar ${DEFAULTS.avatarVersion}`, cost });
 

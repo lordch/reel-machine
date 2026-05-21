@@ -38,6 +38,7 @@ export interface SheetConfig {
   avatar: string;
   caption_style: string;
   broll_model: string;
+  avatar_version: string;
   tts_replacements: string;
   // Generation
   batch_size: number;

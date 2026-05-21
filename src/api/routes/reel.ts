@@ -55,6 +55,11 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
       DEFAULTS.brollModel = config.broll_model;
     }
 
+    // Apply avatar version from Sheet config
+    if (config.avatar_version === "V" || config.avatar_version === "IV" || config.avatar_version === "III") {
+      DEFAULTS.avatarVersion = config.avatar_version;
+    }
+
     // Parse TTS replacements from Sheet (format: "Go2EV → go to EV" per line)
     if (config.tts_replacements) {
       const replacements: [RegExp, string][] = config.tts_replacements

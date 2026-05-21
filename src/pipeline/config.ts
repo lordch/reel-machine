@@ -204,7 +204,7 @@ export const BROLL_MODEL_LIBRARY: Record<string, BrollModelEntry> = {
 
 export const DEFAULTS = {
   avatar: "skyler" as string,
-  avatarVersion: "III" as "III" | "IV",
+  avatarVersion: "III" as "III" | "IV" | "V",
   avatarStyle: "normal" as const,
   talkingStyle: "stable" as const,
   expression: "default" as const,
@@ -289,6 +289,7 @@ export const PRICING = {
   elevenlabsMusicPerMinute: 0.5,
   heygenAvatarIIIPerSec: 0.0167,
   heygenAvatarIVPerSec: 0.1,
+  heygenAvatarVPerSec: 0.05,
 };
 
 // ── Helpers ──

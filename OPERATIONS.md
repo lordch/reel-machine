@@ -25,7 +25,7 @@ Google Sheet                    Express API + Pipeline
              Email "published"
 ```
 
-Jeden Sheet = jeden produkt. Każdy reel kosztuje ~$0.60 (avatar + audio + b-roll + Claude).
+Jeden Sheet = jeden produkt. Koszt per reel zależy od konfiguracji modeli (avatar version, b-roll model, scenario LLM) — patrz sekcja 9.
 
 **Komponenty:**
 - **Express API** w Dockerze na VPS-ie — orchestrates pipeline, czyta/pisze do Sheet
@@ -332,22 +332,31 @@ API_SECRET się rozjechał. Sprawdź:
 
 ---
 
-## 9. Koszty per reel
+## 9. Koszty
 
-Tygodniowy/miesięczny budżet zależy od ilości reeli. Per sztuka:
+**Ważne:** pipeline jest **agnostyczny modelowo** — koszt per reel zależy od tego co masz wybrane w Configu (Sheet → Config tab). Liczby poniżej to **rzędy wielkości**, nie hardkodowane totale. Aktualne koszty per komponent zapisują się do Log tab w Sheecie po każdej generacji (kolumna `scenario_cost`).
 
-| Komponent | Koszt | Provider |
+### Co wpływa na koszt
+
+| Komponent | Determinant | Zakres typowy |
 |---|---|---|
-| Scenariusz (Claude Sonnet) | ~$0.11 | Anthropic |
-| Audio narracji (ElevenLabs) | ~$0.14 | ElevenLabs |
-| Avatar video (5 klipów, Avatar IV) | ~$1.53 | HeyGen |
-| B-roll video (4 klipy, veo-3.1-lite) | ~$0.47 | fal.ai |
-| Render Remotion + R2 storage | ~$0 | wliczone w VPS + R2 free tier |
-| **Razem** | **~$2.25** | |
+| Scenariusz (Claude) | `SCENARIO_MODEL` w `.env` | Sonnet: ~$0.10-0.15 / Haiku: ~$0.02-0.04 |
+| Audio narracji | długość skryptu w znakach (ElevenLabs per char) | ~$0.10-0.20 dla 30s reela |
+| Avatar video | `avatar_version` w Sheet Config (III vs IV) | Avatar III: ~$0.20-0.30 / Avatar IV: ~$1.50 (7x droższy) |
+| B-roll video | `broll_model` w Sheet Config (lista w Models tab) | $0.10-0.50 zależnie od modelu i ilości klipów |
+| Render Remotion + R2 storage | wliczone w koszt VPS-a + R2 free tier (10 GB/mo) | ~$0 |
 
-(Avatar IV jest 7x droższy niż Avatar III. Jeśli koszty bolą, można przełączyć w Configu na `avatar_version: III`.)
+**Decyzje które realnie wpływają na koszt:**
+- **Avatar III vs IV** — różnica ~7x. Avatar IV ma lepszą jakość lip-sync, ale przy dużej skali boli budżet
+- **B-roll model** — w Models tab w Sheecie widzisz aktualne ceny. `veo-3.1-lite` ($0.03/sec) jest sweet-spotem; `kling-3.0-std` ($0.084/sec) lepszy ale 3x droższy
+- **SCENARIO_MODEL** — Haiku do testów, Sonnet do produkcji (różnica jakości scenariuszy zauważalna)
 
-**Gdzie sprawdzić billing:**
+### Gdzie sprawdzić rzeczywiste koszty
+
+1. **Log tab w Sheecie** — każda generacja zapisuje wiersz z kosztem komponentów i sumą. Najdokładniejsze źródło bo z prawdziwego API response.
+2. **Logi API** — po każdym pipeline'ie API loguje breakdown: `audio elevenlabs $X.XXX | broll fal.ai $X.XXX | avatar heygen $X.XXX | TOTAL $X.XXX`. Sprawdź: `ssh root@204.168.187.130 "docker logs reel-machine-api-1 | grep TOTAL | tail"`
+
+### Gdzie sprawdzić billing per serwis
 
 | Serwis | URL |
 |---|---|
@@ -355,8 +364,8 @@ Tygodniowy/miesięczny budżet zależy od ilości reeli. Per sztuka:
 | ElevenLabs | elevenlabs.io → Profile → Subscription |
 | HeyGen | heygen.com → Settings → Billing |
 | fal.ai | fal.ai/dashboard → Billing |
-| Hetzner | console.hetzner.cloud → Billing |
-| Cloudflare | dash.cloudflare.com → Billing (R2 jest praktycznie free do 10 GB/mo) |
+| Hetzner | console.hetzner.cloud → Billing (~€5/mo za VPS) |
+| Cloudflare | dash.cloudflare.com → Billing (R2 praktycznie free do 10 GB/mo) |
 
 ---
 
