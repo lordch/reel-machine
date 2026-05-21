@@ -18,5 +18,11 @@ public/generated/
 public/shared-music.mp3
 public/*.svg
 public/*.png
+src/data/generated-reel.ts
 
 .claude/
+
+# Local-only experiment scripts (voice/avatar testing)
+scripts/local/
+context/notes/
+context/history.md
