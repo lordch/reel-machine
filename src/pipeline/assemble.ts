@@ -304,6 +304,7 @@ export const generatedReelProps: ReelProps & { narrationSrc: string; musicSrc?: 
 `;
 
   const dataFilePath = path.join(process.cwd(), "src", "data", "generated-reel.ts");
+  fs.mkdirSync(path.dirname(dataFilePath), { recursive: true });
   fs.writeFileSync(dataFilePath, dataFileContent);
   console.log(`\nData: ${dataFilePath}`);
   console.log(`Duration: ${totalDuration.toFixed(1)}s | Clips: ${clips.length} | Captions: ${captions.length}`);
