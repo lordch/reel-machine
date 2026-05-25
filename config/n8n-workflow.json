@@ -148,6 +148,24 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "=http://api:3001/api/scenario/{{ $('Approve Webhook').item.json.query.scenarioId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer reel-machine-test-secret-2026" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b3c4d5e6-fetch-scenario-meta",
+      "name": "Fetch Scenario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [208, 592]
+    },
+    {
+      "parameters": {
         "url": "={{ $('Approve Webhook').item.json.query.reelUrl }}",
         "options": {
           "response": {
@@ -172,7 +190,7 @@
         "categoryId": "28",
         "options": {
           "privacyStatus": "public",
-          "description": "={{ $('Approve Webhook').item.json.query.title }}\n\n#shorts"
+          "description": "={{ $('Fetch Scenario').item.json.yt_description }}"
         }
       },
       "id": "1e1761a8-47b6-43d8-ae49-240ee55dfcd3",
@@ -246,6 +264,9 @@
       "main": [[{ "node": "Update Sheet: approved_final", "type": "main", "index": 0 }]]
     },
     "Update Sheet: approved_final": {
+      "main": [[{ "node": "Fetch Scenario", "type": "main", "index": 0 }]]
+    },
+    "Fetch Scenario": {
       "main": [[{ "node": "Download Video from R2", "type": "main", "index": 0 }]]
     },
     "Download Video from R2": {
