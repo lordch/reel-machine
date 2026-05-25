@@ -33,17 +33,17 @@ const DescriptionSchema = z.object({
 
 const descriptionToolDef: Anthropic.Messages.Tool = {
   name: "save_description",
-  description: "Save the YouTube description and Meta caption for the published reel.",
+  description: "Save the YouTube description and Meta caption for the published reel. Both outputs must match the language of the provided script.",
   input_schema: {
     type: "object" as const,
     properties: {
       yt_description: {
         type: "string",
-        description: "Opis YouTube Shorts po polsku. Hook w pierwszych 100 znakach. Link {website} w 2-3 linii (plain text). 3-5 zdań rozwinięcia. Bullet list 3-5 funkcji (✓). CTA. 3-5 hashtagów ostatnia linia, ostatni #shorts. Target: 1500-3000 znaków.",
+        description: "YouTube Shorts description. Language: match the script. Hook in first 100 chars. Full URL with https:// in line 2-3 (e.g. https://{website}) — bare domains are unreliably auto-linked. 3-5 sentence body. Bullet list of 3-5 features (✓). CTA with clickable https:// link. 3-5 hashtags last line, last one always #shorts. Target: 1500-3000 chars.",
       },
       meta_caption: {
         type: "string",
-        description: "Caption Instagram/Facebook Reels po polsku. Hook + value prop w pierwszych 125 znakach. 1-2 zdania rozwinięcia. '🔗 Link w bio' (plain text, NIE URL). 3-5 hashtagów na końcu (BEZ #shorts). Target: 200-500 znaków.",
+        description: "Instagram/Facebook Reels caption. Language: match the script. Hook + value prop in first 125 chars. 1-2 sentence body. Plain text 'Link in bio' (or matching phrase in the script's language) — do NOT include any URL (Meta penalizes reach for posts with URLs in caption). 3-5 hashtags at end (skip #shorts). Target: 200-500 chars.",
       },
     },
     required: ["yt_description", "meta_caption"],
@@ -68,25 +68,25 @@ export async function generateDescriptionAndCaption(
 
 You MUST use the save_description tool to return your work. Do not respond with text — only use the tool.`;
 
-  const userMessage = `Wygeneruj YouTube description + Meta caption dla tego reela.
+  const userMessage = `Generate YouTube description + Meta caption for this reel. Match the language of the script below in both outputs.
 
-**Tytuł:** ${scenario.meta.title}
-**Długość:** ${scenario.meta.targetDuration}s
+**Title:** ${scenario.meta.title}
+**Duration:** ${scenario.meta.targetDuration}s
 
-**Pełny script (narracja):**
+**Full script (narration) — this determines output language:**
 ${scenario.script}
 
-**Sceny (kontekst wizualny):**
+**Scenes (visual context):**
 ${sceneTexts}
 
 ---
 
 **Product context:**
-- Nazwa: ${config.product_name}
-- Website: ${config.website}
-- Opis: ${config.product_description}
+- Name: ${config.product_name}
+- Website (bare domain — prepend https:// when linking): ${config.website}
+- Description: ${config.product_description}
 
-**Features (TYLKO z tej listy możesz wybierać do bulletów):**
+**Features (ONLY pick bullets from this list):**
 ${config.product_features}
 
 **Target audience:**
@@ -103,7 +103,7 @@ ${config.brand_voice}
 
 ---
 
-Pamiętaj: wszystko po polsku, tool save_description, dwa pola.`;
+Reminder: match the script's language exactly in both outputs. Use the save_description tool with both fields.`;
 
   console.log(`Generating YT description + Meta caption (${model})...`);
 
