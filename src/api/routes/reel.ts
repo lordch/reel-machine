@@ -21,7 +21,7 @@ export function isGenerating(): boolean {
 }
 
 router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, res: Response) => {
-  const { scenarioId } = req.params;
+  const scenarioId = req.params.scenarioId as string;
 
   if (generating) {
     res.status(409).json({ error: "Already generating", currentId: generatingId });
@@ -139,6 +139,30 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
   }
 });
 
+// Read scenario row by ID (used by n8n before YouTube upload to fetch generated description)
+router.get("/scenario/:scenarioId", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { scenarioId } = req.params;
+    const scenarios = await readScenarios();
+    const scenario = scenarios.find((s) => s.id === scenarioId);
+    if (!scenario) {
+      res.status(404).json({ error: `Scenario ${scenarioId} not found` });
+      return;
+    }
+    res.json({
+      id: scenario.id,
+      title: scenario.title,
+      reel_url: scenario.reel_url,
+      yt_description: scenario.yt_description,
+      meta_caption: scenario.meta_caption,
+      status: scenario.status,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.status(500).json({ error: message });
+  }
+});
+
 // Update scenario status (used by n8n)
 router.post("/update-status", authMiddleware, async (req: Request, res: Response) => {
   try {
@@ -186,6 +210,24 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string, a
       }
     }
 
+    // Generate YT description + Meta caption (PRZED cleanupem — czyta scenario.json z lokalnego dysku)
+    let ytDescription = "";
+    let metaCaption = "";
+    try {
+      const { generateDescriptionAndCaption } = await import("../../scenario/generate-description.js");
+      const { loadScenario } = await import("../../pipeline/schema.js");
+      const finalScenario = loadScenario(pipelineId);
+      const config = await readConfig();
+      const descResult = await generateDescriptionAndCaption(finalScenario, config, pipelineId);
+      ytDescription = descResult.yt_description;
+      metaCaption = descResult.meta_caption;
+      totalCost += descResult.cost;
+    } catch (err) {
+      console.warn(`  ⚠ Description generation failed: ${err instanceof Error ? err.message : err}`);
+      ytDescription = `${title}\n\n#shorts`;
+      metaCaption = title;
+    }
+
     // Cleanup local files after successful R2 upload
     if (uploadedToR2) {
       try {
@@ -204,6 +246,8 @@ async function runPipeline(sheetId: string, pipelineId: string, title: string, a
       cost: totalCost,
       generated_at: new Date().toISOString(),
       error: "",
+      yt_description: ytDescription,
+      meta_caption: metaCaption,
     });
 
     await appendLog({

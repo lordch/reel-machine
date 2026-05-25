@@ -86,19 +86,22 @@ export interface ScenarioRow {
   generated_at: string;
   published_at: string;
   error: string;
+  yt_description: string;
+  meta_caption: string;
 }
 
 const SCENARIO_HEADERS = [
   "id", "batch_id", "title", "framework", "script", "scenes_json",
   "duration_sec", "status", "reel_url", "publish_urls", "cost",
   "scenario_cost", "created_at", "generated_at", "published_at", "error",
+  "yt_description", "meta_caption",
 ];
 
 export async function readScenarios(): Promise<ScenarioRow[]> {
   const sheets = getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: spreadsheetId(),
-    range: "Scenarios!A1:P1000",
+    range: "Scenarios!A1:R1000",
   });
 
   const rows = res.data.values || [];
@@ -158,7 +161,7 @@ export async function updateScenarioStatus(
   // Read current row
   const current = await sheets.spreadsheets.values.get({
     spreadsheetId: spreadsheetId(),
-    range: `Scenarios!A${rowIndex}:P${rowIndex}`,
+    range: `Scenarios!A${rowIndex}:R${rowIndex}`,
   });
 
   const currentValues = current.data.values?.[0] || [];
@@ -169,7 +172,7 @@ export async function updateScenarioStatus(
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: spreadsheetId(),
-    range: `Scenarios!A${rowIndex}:P${rowIndex}`,
+    range: `Scenarios!A${rowIndex}:R${rowIndex}`,
     valueInputOption: "RAW",
     requestBody: { values: [updatedRow] },
   });
