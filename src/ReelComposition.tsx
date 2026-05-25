@@ -34,7 +34,6 @@ export const ReelComposition: React.FC<
       {/* Branding */}
       <BrandingOverlay
         logo={branding.logo}
-        website={branding.website}
         clips={clipInfos}
       />
       {/* Master audio — single continuous narration from ElevenLabs */}

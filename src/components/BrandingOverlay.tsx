@@ -4,11 +4,10 @@ import type { ClipInfo } from "../types";
 
 interface Props {
   logo: string;
-  website: string;
   clips?: ClipInfo[];
 }
 
-export const BrandingOverlay: React.FC<Props> = ({ logo, website, clips }) => {
+export const BrandingOverlay: React.FC<Props> = ({ logo, clips }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
@@ -52,10 +51,6 @@ export const BrandingOverlay: React.FC<Props> = ({ logo, website, clips }) => {
               position: "absolute",
               top: 50,
               right: 36,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 6,
               opacity: isAvatar ? 1 : 0.8,
             }}
           >
@@ -63,18 +58,6 @@ export const BrandingOverlay: React.FC<Props> = ({ logo, website, clips }) => {
               src={staticFile(logo)}
               style={{ width: 400, height: 400 }}
             />
-            <span
-              style={{
-                fontSize: 26,
-                fontWeight: 700,
-                color: "#FFFFFF",
-                textShadow: "0 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.5)",
-                fontFamily: "Arial, sans-serif",
-                letterSpacing: 1.5,
-              }}
-            >
-              {website}
-            </span>
           </div>
         </AbsoluteFill>
       </Sequence>,
