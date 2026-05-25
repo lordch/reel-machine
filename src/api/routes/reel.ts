@@ -1,6 +1,6 @@
 import path from "path";
 import { Router, type Request, type Response } from "express";
-import { readConfig, readScenarios, readAvatars, pickNextAvatar, updateScenarioStatus, appendLog } from "../sheets.js";
+import { readConfig, readScenarios, readAvatars, pickNextAvatar, updateScenarioStatus, updateConfigValue, appendLog } from "../sheets.js";
 import { authMiddleware } from "../auth.js";
 import { saveScenario } from "../../pipeline/schema.js";
 import { DEFAULTS, AVATAR_LIBRARY, BROLL_MODEL_LIBRARY } from "../../pipeline/config.js";
@@ -103,20 +103,17 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
           description: a.description,
         };
       }
-      // Find last used avatar from recent scenarios
-      const lastGenerated = scenarios
-        .filter(s => s.status === "ready_for_review" || s.status === "published" || s.status === "approved_final")
-        .pop();
-      let lastUsed = "";
-      try {
-        const lastScenario = lastGenerated ? JSON.parse(lastGenerated.scenes_json) : null;
-        lastUsed = lastScenario?.avatar?.name || "";
-      } catch {}
+      const lastUsed = config.last_avatar_used || "";
+      const activeNames = avatars.filter(a => a.active).map(a => a.name);
+      if (lastUsed && !activeNames.includes(lastUsed)) {
+        console.log(`  last_avatar_used="${lastUsed}" not in active list — restarting rotation`);
+      }
       const avatar = pickNextAvatar(avatars, lastUsed);
       scenarioData.avatar = { name: avatar.name, avatarId: avatar.heygenAvatarId };
       // Override voice in DEFAULTS for TTS
       DEFAULTS.avatar = avatar.name;
       console.log(`  Avatar: ${avatar.name} (${avatar.description})`);
+      await updateConfigValue("last_avatar_used", avatar.name);
     }
 
     // Save scenario.json to disk (pipeline expects it there)

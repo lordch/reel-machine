@@ -36,6 +36,7 @@ export interface SheetConfig {
   caption_style: string;
   broll_model: string;
   avatar_version: string;
+  last_avatar_used: string;
   tts_replacements: string;
   // Generation
   batch_size: number;
@@ -65,6 +66,32 @@ export async function readConfig(): Promise<SheetConfig> {
     batch_size: parseInt(config.batch_size, 10) || 20,
     target_duration: parseInt(config.target_duration, 10) || 30,
   } as unknown as SheetConfig;
+}
+
+export async function updateConfigValue(key: string, value: string): Promise<void> {
+  const sheets = getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: spreadsheetId(),
+    range: "Config!A:A",
+  });
+
+  const rows = res.data.values || [];
+  let rowIndex = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][0] === key) {
+      rowIndex = i + 1; // 1-based for Sheets API
+      break;
+    }
+  }
+
+  if (rowIndex === -1) throw new Error(`Config key "${key}" not found`);
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: spreadsheetId(),
+    range: `Config!B${rowIndex}`,
+    valueInputOption: "RAW",
+    requestBody: { values: [[value]] },
+  });
 }
 
 // ── Scenarios tab ──
