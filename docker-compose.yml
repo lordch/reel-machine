@@ -24,6 +24,10 @@ services:
       - N8N_HOST=reel.darkhelmettechnologies.com
       - N8N_PROTOCOL=https
       - WEBHOOK_URL=https://reel.darkhelmettechnologies.com/
+      - META_PAGE_ID=${META_PAGE_ID}
+      - META_IG_USER_ID=${META_IG_USER_ID}
+      - META_PAGE_ACCESS_TOKEN=${META_PAGE_ACCESS_TOKEN}
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped
