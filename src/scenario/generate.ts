@@ -81,7 +81,7 @@ const scriptToolDef: Anthropic.Messages.Tool = {
   input_schema: {
     type: "object" as const,
     properties: {
-      title: { type: "string", description: "Human-readable title" },
+      title: { type: "string", description: "The public YouTube Shorts video title — exactly as viewers will see it in their YouTube feed. Catchy, hook-driven, 5-10 words. Treat this as published-facing copy, not an internal label: NO duration markers like '(30s)', NO parenthetical tags, NO production metadata." },
       script: { type: "string", description: "The full narration text." },
     },
     required: ["title", "script"],
