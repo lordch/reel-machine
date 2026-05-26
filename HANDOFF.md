@@ -212,7 +212,7 @@ Add as many avatars as you want. Set `Active` to `no` to temporarily disable one
 ### n8n Workflow Overview
 
 ```
-Cron (Mon+Thu 10:00) → Poll Sheets → triggers reel generation
+Cron (schedule configured in n8n UI) → Poll Sheets → triggers reel generation
 
 Pipeline Webhook ← API calls after render
   → Success? → Email with "Approve & Publish" link

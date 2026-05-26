@@ -274,8 +274,8 @@ curl https://reel.darkhelmettechnologies.com/api/health
 # 2. Sprawdź logi API (ostatnie 50 linii)
 ssh root@204.168.187.130 "docker logs --tail 50 reel-machine-api-1"
 
-# 3. Sprawdź czy n8n cron leci (Mon+Thu 10:00 by default)
-# Otwórz n8n UI → Executions
+# 3. Sprawdź czy n8n cron leci — schedule jest w workflow node, sprawdź harmonogram + Executions tab
+# Otwórz n8n UI → Workflows → Reel Machine → Schedule Trigger node
 
 # 4. Sprawdź czy któryś klucz nie wygasł
 # - HeyGen czasem rate-limituje przy darmowym koncie
