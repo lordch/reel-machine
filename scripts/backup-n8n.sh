@@ -18,8 +18,8 @@ echo "[$(date)] === n8n backup START ==="
 echo "[$(date)] Stopping n8n container..."
 docker compose stop n8n
 
-echo "[$(date)] Creating tarball..."
-tar czf "$TARBALL" -C "$VOLUME_DATA" .
+echo "[$(date)] Creating tarball (excluding storage/ — cached binary data from workflow executions)..."
+tar czf "$TARBALL" --exclude='./storage' -C "$VOLUME_DATA" .
 
 echo "[$(date)] Starting n8n container..."
 docker compose start n8n
