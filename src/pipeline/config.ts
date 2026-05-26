@@ -209,7 +209,7 @@ export const DEFAULTS = {
   matting: false,
 
   captionStyle: "bold-pop" as const,
-  captionBottomPx: 160,
+  captionBottomPx: 500,
 
   music: {
     regenerate: false,
