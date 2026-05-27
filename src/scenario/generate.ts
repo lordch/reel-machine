@@ -424,6 +424,35 @@ function buildScenario(
 }
 
 // ═══════════════════════════════════════════════════════════
+// Regenerate scenes for an existing scenario (script-edit drift)
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Re-run step 3 (scene splitting) for an already-titled scenario.
+ * Used when Filip edits `script` in Sheet between generation and pipeline run —
+ * pipeline detects drift vs scenes_json.script and calls this to resync.
+ *
+ * Skips step 1+2 (title + script generation) since title is preserved and script
+ * is provided by the caller (from Sheet's edited value).
+ */
+export async function regenerateScenes(
+  script: string,
+  title: string,
+  config: SheetConfig,
+  previousBrollPrompts: string[] = [],
+): Promise<{ scenario: Scenario; usage: ClaudeUsage; cost: number }> {
+  const targetDuration = config.target_duration || 30;
+  const sceneCount = getSceneCount(targetDuration);
+  const model = getModel();
+
+  const { scenes, usage } = await splitIntoScenes(script, sceneCount, previousBrollPrompts);
+  const scenario = buildScenario(title, scenes, targetDuration);
+  const cost = calculateCost(usage, model);
+
+  return { scenario, usage, cost };
+}
+
+// ═══════════════════════════════════════════════════════════
 // Main: orchestrate steps
 // ═══════════════════════════════════════════════════════════
 

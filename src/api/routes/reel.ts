@@ -9,6 +9,12 @@ import { setTtsReplacements } from "../../pipeline/generate-audio.js";
 import { orchestrate } from "../../orchestrate.js";
 import { getCostReport } from "../../pipeline/costs.js";
 import { uploadToR2 } from "../storage.js";
+import { regenerateScenes } from "../../scenario/generate.js";
+
+// Normalize for script-drift detection — strip case/punct/whitespace
+// so that cosmetic edits (extra space, punctuation tweak) don't trigger regen
+const normalizeScript = (s: string): string =>
+  s.toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim();
 
 const router = Router();
 
@@ -45,7 +51,25 @@ router.post("/generate-reel/:scenarioId", authMiddleware, async (req: Request, r
 
     // Parse the full scenario JSON and add pipeline defaults
     const config = await readConfig();
-    const scenarioData = JSON.parse(scenario.scenes_json);
+    let scenarioData = JSON.parse(scenario.scenes_json);
+
+    // Detect script drift — if Filip edited Sheet's `script` column after generation,
+    // regenerate scenes_json from the new script so audio/avatar/broll match the edit.
+    // Cosmetic edits (whitespace/punct/case only) don't trigger regen — see normalizeScript().
+    if (normalizeScript(scenario.script) !== normalizeScript(scenarioData.script)) {
+      console.log(`Script drift detected for ${scenarioId} — regenerating scenes from edited script`);
+      const { scenario: regenerated, cost: regenCost } = await regenerateScenes(
+        scenario.script,
+        scenario.title,
+        config,
+      );
+      scenarioData = regenerated;
+      await updateScenarioStatus(scenarioId, {
+        scenes_json: JSON.stringify(scenarioData),
+      });
+      console.log(`  ✓ Scenes regenerated (cost: $${regenCost.toFixed(4)})`);
+    }
+
     scenarioData.branding = scenarioData.branding || {
       logo: "logo.svg",
       website: config.website,
